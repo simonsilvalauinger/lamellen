@@ -1,4 +1,4 @@
-# Lamellensteuerung für die Warmluft-Ölheizung – Lösungskonzept (v2)
+# Lamellensteuerung für die Warmluft-Ölheizung – Lösungskonzept (v3)
 
 ## 1. Ausgangslage
 
@@ -15,6 +15,8 @@
 
 - 7 Raumauslässe, **alle** sollen gesteuert werden (auch Wohnzimmer und Küche).
 - Die Lamellen werden über einen Drehknopf verstellt, der wie eine Flügelmutter aus Kunststoff aussieht.
+  Weg: 0–45°, der Knopf dreht nur und wandert nicht axial.
+- Die Gitter sind nur geklemmt (keine Schrauben).
 - **An den Gittern gibt es keine Steckdosen** → Batteriebetrieb.
 - Klappen gibt es nur am Anfang der Schächte (an der Heizung, dort gibt es Strom).
 - In jedem Raum hängt bereits ein Temperatur- und Feuchtesensor an HA.
@@ -32,6 +34,10 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
    - Mehrere Stunden kein Kontakt zum Gateway → auf 100 % fahren.
 
 ## 3. Mechanik
+
+> **Umgesetzt:** `hardware/lamellen_aktor.scad`, siehe `hardware/README.md`. Gewählt wurde
+> ein MG90S mit 1:3-Zahnradstufe (135° Servo = 45° Lamelle) und einem Halter auf zwei Füßen,
+> die auf dem Gitterrahmen kleben oder verschraubt sind.
 
 ### Kopplung an die Flügelmutter
 
@@ -138,6 +144,8 @@ Mit einem 18650-Akku (3000 mAh) ergibt das rechnerisch über 3 Jahre, realistisc
 Gateway: beliebiger ESP32-C6/S3 + USB-Netzteil an der Heizung, ca. 10 €.
 
 ## 6. Software
+
+> **Umgesetzt:** `firmware/protocol` (getestet) und `firmware/node`. Das Gateway folgt.
 
 ### Repo-Struktur
 

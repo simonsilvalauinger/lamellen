@@ -1,0 +1,9 @@
+[package]
+name = "lamellen-protocol"
+version = "0.1.0"
+edition = "2024"
+description = "Funkprotokoll und Steuerlogik der Lamellen-Knoten (no_std)"
+
+[dependencies]
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+postcard = { version = "1.1", default-features = false }
