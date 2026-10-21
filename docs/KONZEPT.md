@@ -1,181 +1,192 @@
-# Lamellensteuerung für die Warmluft-Ölheizung – Lösungskonzept
+# Lamellensteuerung für die Warmluft-Ölheizung – Lösungskonzept (v2)
 
 ## 1. Ausgangslage
 
 ```
                  ┌──────────────────────┐
-  Wohnzimmer ◄───┤                      ├───► Küche          (direkt an der Heizung)
-                 │  Warmlufterzeuger    │
-                 │  (Öl)                │
+  Wohnzimmer ◄───┤  Warmlufterzeuger    ├───► Küche
+                 │  (Öl)  [Steckdose]   │
                  └───┬──────────────┬───┘
-                     │ Schacht 1    │ Schacht 2
+               Klappe│ Schacht 1    │Klappe Schacht 2   (rechteckig)
         ┌────────────┼──────┐       ├──────────────┐
         ▼            ▼      ▼       ▼              ▼
    Schlafzimmer  Spielzi. Arbeitszi. Kinderschlafzi. Badezimmer
 ```
 
-7 Auslässe, jeder mit einem manuellen Lamellengitter. Ziel: Jedes Gitter einzeln aus
-Home Assistant (HA) heraus auf 0–100 % stellen, ESP32-basiert, Firmware in Rust,
-Mechanik aus dem 3D-Drucker.
+- 7 Raumauslässe, **alle** sollen gesteuert werden (auch Wohnzimmer und Küche).
+- Die Lamellen werden über einen Drehknopf verstellt, der wie eine Flügelmutter aus Kunststoff aussieht.
+- **An den Gittern gibt es keine Steckdosen** → Batteriebetrieb.
+- Klappen gibt es nur am Anfang der Schächte (an der Heizung, dort gibt es Strom).
+- In jedem Raum hängt bereits ein Temperatur- und Feuchtesensor an HA.
+- Drucker: Bambu Lab A1 (offener Bauraum).
 
-## 2. Wichtige Randbedingungen (zuerst klären!)
+## 2. Sicherheit: Mindest-Luftstrom
 
-1. **Mindest-Luftmenge der Heizung.** Ein Warmlufterzeuger braucht Luftdurchsatz.
-   Sind alle Gitter zu, staut sich die Wärme, der Sicherheitstemperaturbegrenzer (STB)
-   löst aus. Deshalb:
-   - mechanischer Anschlag: kein Gitter schließt ganz (z. B. min. 15 %), **und/oder**
-   - Wohnzimmer + Küche (direkt an der Heizung) bleiben immer offen, **und**
-   - Software-Regel in HA: Summe aller Öffnungen ≥ Schwellwert.
-2. **Temperatur am Auslass.** Vorher mit einem IR-Thermometer messen (Heizung auf Volllast).
-   - PLA erweicht ab ~55 °C → **nicht verwenden**.
-   - PETG bis ~75 °C, **ASA/ABS bis ~95 °C** → Empfehlung ASA.
-   - Hobby-Servos sind meist nur bis 60 °C spezifiziert → Motor nicht in den Luftstrom,
-     sondern seitlich auf der Raumseite montieren.
-3. **Stromversorgung.** Gibt es an den Gittern Steckdosen? Das entscheidet zwischen
-   Netz- (WLAN geht problemlos) und Batteriebetrieb (dann eher Zigbee/Thread).
-4. **Mechanik des Gitters.** Hebel, Drehrad oder Schieber? Wie schwergängig?
-   Fotos + Maße bestimmen das Druckteil.
-5. Nichts an der Heizung selbst bzw. im heißen Hauptkanal aus Kunststoff verbauen.
+Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesichert werden:
 
-## 3. Mechanik – drei Varianten
+1. **Mechanik:** Der Aktor kann das Gitter nie ganz schließen (Software-Endlage z. B. 15 %).
+2. **Gateway/HA:** Befehle, die die Summe aller Öffnungen unter einen Grenzwert drücken
+   würden, werden abgelehnt bzw. korrigiert.
+3. **Knoten-Firmware (Fail-Safe):**
+   - Batterie fast leer → Gitter auf 100 % fahren, *dann* abschalten.
+   - Mehrere Stunden kein Kontakt zum Gateway → auf 100 % fahren.
 
-| Variante | Beschreibung | Vorteile | Nachteile |
-|---|---|---|---|
-| **A – Nachrüst-Aktor** (Empfehlung) | Gedruckter Halter wird an den Gitterrahmen geklemmt/geschraubt, ein Servo bewegt über Schubstange/Zahnrad den vorhandenen Stellhebel | Gitter bleibt original, rückbaubar, billig | je Gittertyp eigene Adaption |
-| **B – Eigenes Motorgitter** | Komplettes Lamellengitter in ASA drucken, Lamellen über Koppelstange vom Servo bewegt, ersetzt das alte Gitter | volle Kontrolle über Anschläge, Optik einheitlich | mehr Druck- und Konstruktionsaufwand, Hitze direkt am Kunststoff |
-| **C – Rohrklappe** | Drosselklappe im runden Stichkanal hinter dem Gitter | unsichtbar | Kanalzugang nötig, heiß, Wartung schwierig |
+## 3. Mechanik
 
-Für die beiden **Schächte** zusätzlich je eine Klappe einzubauen ist möglich, dort ist es
-aber heiß → dann eine fertige Metall-Motorklappe (z. B. DN125 mit 24-V-Stellantrieb) per
-Relais schalten, nicht drucken.
-
-### Antrieb
-
-| Antrieb | Kosten | Pro | Contra |
-|---|---|---|---|
-| **MG90S Servo** (Metallgetriebe) | ~3 € | absolute Position ohne Referenzfahrt, einfache PWM-Ansteuerung | brummt/zittert, wenn dauerhaft angesteuert → PWM nach Bewegung abschalten bzw. Versorgung per MOSFET trennen |
-| **28BYJ-48 Schrittmotor + ULN2003** | ~3 € | leise, selbsthemmend (hält ohne Strom), hitzetoleranter | braucht Referenzfahrt (Endschalter/Hall-Sensor) |
-| MG996R (größer) | ~6 € | viel Kraft für schwergängige Gitter | groß |
-
-CAD-Vorschlag: **OpenSCAD** (parametrisch – Gittermaße als Variablen, gut versionierbar
-im Repo) oder FreeCAD/CadQuery.
-
-## 4. Funk + Software – drei Architekturen
-
-### Option 1 – WLAN + MQTT, Rust auf ESP-IDF (**Empfehlung**)
-
-- Hardware: **Seeed XIAO ESP32-C6** (WLAN 6 + 802.15.4 → später auch Thread/Zigbee möglich)
-  oder XIAO ESP32-C3. Ein Knoten pro Gitter, 5 V über USB-C-Netzteil.
-- Rust-Stack: `esp-idf-svc` / `esp-idf-hal` (std).
-  - `EspWifi` für WLAN, `EspMqttClient` für MQTT, LEDC-PWM für den Servo,
-    NVS für Konfiguration/letzte Position, `EspOta` für Firmware-Updates über WLAN.
-  - Projektstart: `cargo generate esp-rs/esp-idf-template`.
-- HA-Anbindung: Mosquitto-Add-on + **MQTT-Discovery**. Jedes Gitter erscheint automatisch
-  als `cover`-Entität mit Positionsregler 0–100 %.
-- Vorteile: reifstes Rust-Ökosystem, einfach zu debuggen, OTA, kein Zigbee-Coordinator nötig.
-- Nachteil: braucht Netzstrom (WLAN ist für Batterie ungeeignet).
-
-Alternative im gleichen Option: `no_std` mit `esp-hal` 1.x + Embassy + `esp-radio`
-(ehem. `esp-wifi`) + `rust-mqtt`. Schlanker und schneller beim Booten, aber OTA und MQTT
-sind mehr Eigenarbeit.
-
-### Option 2 – Zigbee (ESP32-C6 / ESP32-H2)
-
-- Gerät implementiert den Standard-Cluster **Window Covering (0x0102)** → ZHA erkennt es
-  als `cover`; bei Zigbee2MQTT ist ein External Converter nötig.
-- Sehr stromsparend als *Sleepy End Device* → **Batteriebetrieb** realistisch
-  (Servo bewegt sich nur wenige Male am Tag).
-- **Haken für Rust:** Es gibt keinen ausgereiften Zigbee-Stack in reinem Rust. Man muss
-  Espressifs C-Bibliothek `esp-zigbee-lib` über `esp-idf-sys` (extra/managed components)
-  einbinden und die FFI-Bindings selbst pflegen. Machbar, aber deutlich mehr Aufwand.
-
-### Option 3 – Matter over Thread (ESP32-C6)
-
-- `rs-matter` (reine Rust-Implementierung von Matter) + OpenThread-Bindings.
-  Gerätetyp *Window Covering* → native HA-Matter-Integration, batteriefähig.
-- Zukunftssicher und „richtig Rust“, aber aktuell noch experimentell; braucht einen
-  Thread-Border-Router (z. B. HA Connect ZBT-1/-2 oder ein Thread-fähiger Router).
-
-### Bewertung
-
-| | WLAN/MQTT | Zigbee | Matter/Thread |
-|---|---|---|---|
-| Reife Rust-Ökosystem | ★★★ | ★ (C-FFI) | ★★ |
-| Batteriebetrieb | ✗ | ★★★ | ★★★ |
-| Aufwand bis lauffähig | gering | hoch | mittel–hoch |
-| HA-Integration | MQTT-Discovery | ZHA / Z2M | Matter |
-
-## 5. Firmware-Design (Option 1)
+### Kopplung an die Flügelmutter
 
 ```
-boot
- ├─ NVS lesen: Raumname, Min/Max-Winkel, letzte Position
- ├─ WLAN verbinden, MQTT verbinden (LWT: lamellen/<raum>/availability = offline)
- ├─ Discovery-Config publizieren (retained), "online" publizieren
- ├─ subscribe lamellen/<raum>/set_position  und  lamellen/<raum>/cmd
- └─ Loop
-     ├─ Sollwert empfangen → begrenzen auf [min, 100]
-     ├─ Servo langsam rampen (leise, schont Getriebe)
-     ├─ PWM abschalten, Position in NVS speichern
-     └─ lamellen/<raum>/position publizieren (retained)
-optional: DS18B20 im Auslass → Zulufttemperatur (zeigt auch, ob die Heizung läuft)
+  Wand/Gitter          Flügelmutter      Mitnehmer-Glocke      Motor
+  ───────────┐           ┌─┐            ┌───────────┐       ┌──────┐
+             │◄──────────┤ ├────────────┤  Schlitz  ├───────┤ Welle│
+  ───────────┘           └─┘            └───────────┘       └──┬───┘
+             └────────── Halter (an Gitterrahmen geklemmt/geschraubt) ──┘
 ```
 
-Discovery-Payload (Topic `homeassistant/cover/lamelle_schlafzimmer/config`):
+- Eine **Mitnehmer-Glocke** wird über die Flügelmutter gestülpt (Schlitz mit 0,3 mm Spiel).
+- Wandert der Knopf beim Drehen axial (Gewinde), läuft die Glocke auf einem
+  **Vielkeil-/Sechskantschaft**, damit sie mitgleiten kann.
+- Der **Halter** wird am Gitterrahmen festgeschraubt (vorhandene Schrauben) oder hinter dem
+  Gitter verklemmt. Der Motor sitzt raumseitig und außerhalb des warmen Luftstroms.
+- CAD in **OpenSCAD**, parametrisch (Flügelspannweite, Dicke, Nabendurchmesser,
+  Rahmenmaße).
 
-```json
-{
-  "name": "Lamelle Schlafzimmer",
-  "unique_id": "lamelle_schlafzimmer",
-  "device_class": "damper",
-  "command_topic": "lamellen/schlafzimmer/cmd",
-  "set_position_topic": "lamellen/schlafzimmer/set_position",
-  "position_topic": "lamellen/schlafzimmer/position",
-  "availability_topic": "lamellen/schlafzimmer/availability",
-  "payload_open": "OPEN", "payload_close": "CLOSE", "payload_stop": "STOP",
-  "position_open": 100, "position_closed": 0,
-  "device": { "identifiers": ["lamelle_schlafzimmer"], "name": "Lamelle Schlafzimmer",
-              "manufacturer": "DIY", "model": "XIAO ESP32-C6 + MG90S" }
-}
-```
+### Antrieb – abhängig vom Drehbereich
 
-## 6. Regelung in Home Assistant
+| Drehbereich zu→auf | Antrieb | Positionserfassung |
+|---|---|---|
+| ≤ 180° | **MG90S-Servo** (direkt oder mit Zahnradübersetzung) | absolut über PWM |
+| > 180° / mehrere Umdrehungen | **N20-Schneckengetriebemotor** + DRV8833 | **AS5600** Magnet-Winkelsensor + Umdrehungszähler, Referenz über Blockade an der Endlage |
 
-- Pro Raum ein Temperatursensor **im Raum**, nicht am Gitter (z. B. Zigbee-Sensor
-  SNZB-02 / Aqara, oder ein SHT40 an einem eigenen Knoten).
-- Pro Raum ein Sollwert (`input_number`) bzw. Zeitplan (`schedule`).
-- Einfache P-Regelung als Automation/Template:
-  `Öffnung = clamp(min, 100, 50 + k · (Soll − Ist))`, z. B. alle 5 min,
-  mit Hysterese, damit die Servos nicht ständig nachstellen.
-- Sicherheitsregel: Summe der Öffnungen ≥ Grenzwert, sonst Wohnzimmer/Küche auf 100 %.
-- Der Brenner wird weiterhin vom vorhandenen Raumthermostat geregelt – die Lamellen
-  verteilen nur die Wärme. Später möglich: Brennerfreigabe per Relais aus HA
-  (nur mit potentialfreiem Thermostateingang und fachgerecht!).
+Ein Schneckengetriebe ist selbsthemmend und hält die Position ohne Strom, was im
+Batteriebetrieb ideal ist. Motor, Treiber und Sensor sind nur während einer Bewegung
+bestromt.
 
-## 7. Stückliste je Gitter (Option 1, Variante A)
+### Material auf dem Bambu A1
 
-| Teil | ca. Preis |
+Zuerst die Oberflächentemperatur am Knopf bei Volllast messen.
+
+| Temperatur am Knopf | Material |
 |---|---|
-| Seeed XIAO ESP32-C6 | 6 € |
-| MG90S Servo | 3 € |
-| USB-C-Netzteil 5 V/1 A + Kabel | 6 € |
-| Kleinteile (Elko 470 µF am Servo, MOSFET, Schrauben) | 1 € |
-| ASA-Filament | 1 € |
-| **Summe** | **~17 €** → 7 Gitter ≈ 120 € |
+| < 60 °C | **PETG** für alles (auf dem A1 problemlos) |
+| 60–85 °C | Glocke und knopfnahe Teile in **ASA**. Auf dem A1 machbar für kleine Teile: Brim, Bauteillüfter niedrig, Karton-Haube gegen Zugluft. Halter in PETG |
+| > 85 °C | Motor weiter weg, Kopplung über eine Metallwelle (M3-Gewindestange/4-mm-Welle) |
 
-## 8. Vorgeschlagene Repo-Struktur
+**PLA nicht verwenden.**
+
+## 4. Funk – Architektur für Batteriebetrieb
+
+### Option A – ESP-NOW-Knoten + Gateway an der Heizung (**Empfehlung**)
 
 ```
-firmware/        Rust-Crate (esp-idf-svc), ein Binary, Raum per NVS/Build-Config
-hardware/        OpenSCAD-Dateien, STL-Exporte, Fotos/Maße der Gitter
-homeassistant/   Automationen, Blueprints, Dashboard-YAML
-docs/            dieses Konzept, Verdrahtung
+ [Knoten Raum x7]  ── ESP-NOW (2,4 GHz) ──►  [Gateway an der Heizung]  ── WLAN/MQTT ──► Home Assistant
+  XIAO ESP32-C6                               ESP32 (Netzteil)
+  Akku, Deep-Sleep                            + optional 2 Schachtklappen-Motoren
 ```
 
-## 9. Vorgehen
+- Der Knoten wacht alle **5 min** auf, sendet einen Status (Position, Akku, RSSI) und bekommt
+  in derselben Funkrunde den Sollwert zurück. Danach Bewegung (falls nötig) und wieder
+  Deep-Sleep. Wachzeit ca. 50–150 ms, weil kein WLAN-Login und kein DHCP nötig ist.
+- Das **Gateway** hängt am Netz, verbindet sich per WLAN mit MQTT und meldet per
+  MQTT-Discovery 7 `cover`-Entitäten plus Akku- und RSSI-Sensoren. Hier liegt auch die
+  zentrale Sicherheitslogik. Optional steuert es die beiden Schachtklappen.
+- **Alles in Rust:** ESP-NOW wird von `esp-radio` (no_std) und von `esp-idf-svc` gut unterstützt.
+- Latenz bis 5 min, für eine Heizung irrelevant (einstellbar).
+- Hinweis: ESP-NOW muss auf dem WLAN-Kanal des Gateways laufen. Der Knoten scannt beim
+  ersten Start die Kanäle und merkt sich den gefundenen Kanal.
 
-1. Gitter fotografieren/vermessen, Auslasstemperatur messen, Steckdosen prüfen.
-2. Prototyp an **einem** Gitter (Schlafzimmer): Halter drucken, Servo + XIAO,
-   Firmware mit MQTT-Discovery.
-3. Eine Heizperiode-Woche testen (Lautstärke, Hitze, Mechanik).
-4. Auf alle Räume ausrollen, Regelung in HA aktivieren.
+### Option B – WLAN direkt mit Deep-Sleep
+
+- Der Knoten wacht alle 10–15 min auf, verbindet sich per WLAN (statische IP, gespeicherter
+  BSSID/Kanal) und liest den retained MQTT-Sollwert.
+- Kein Gateway nötig, aber jeder WLAN-Login dauert 0,5–3 s. Das ergibt etwa 3–5× mehr
+  Energie als Option A und hängt von der WLAN-Abdeckung am Gitter ab.
+- Guter Einstieg für den ersten Prototyp. Der Funk-Teil der Firmware ist austauschbar.
+
+### Option C – Zigbee Sleepy End Device (ESP32-C6/H2)
+
+- Technisch ideal: geringster Verbrauch, direkt in ZHA/Z2M, nutzt ein vorhandenes
+  Zigbee-Netz.
+- **Aber:** Es gibt keinen brauchbaren Zigbee-Stack in reinem Rust, man müsste `esp-zigbee-lib`
+  (C) per FFI einbinden. Das ist sinnvoll nur, wenn Rust für diesen Teil kein Muss ist.
+
+### Energiebilanz (Option A, Abschätzung)
+
+| Posten | mAh/Tag |
+|---|---|
+| 288 Wakes × ~0,1 s × ~60 mA | ~0,5 |
+| Deep-Sleep XIAO C6 (~15 µA) | ~0,4 |
+| 4 Bewegungen × 2 s × ~250 mA | ~0,6 |
+| **Summe** | **~1,5** |
+
+Mit einem 18650-Akku (3000 mAh) ergibt das rechnerisch über 3 Jahre, realistisch reicht es
+**sicher mindestens eine Heizperiode**. Geladen wird über den USB-C-Anschluss des XIAO
+(Ladeschaltung ist auf dem Board).
+
+## 5. Hardware je Knoten
+
+| Teil | Zweck | ca. € |
+|---|---|---|
+| Seeed XIAO ESP32-C6 | MCU, ESP-NOW, LiPo-Lader | 6 |
+| 18650-Li-Ion 3000 mAh + Halter | Versorgung (an BAT-Pads) | 6 |
+| Servo MG90S **oder** N20-Schneckenmotor + DRV8833 + AS5600 | Antrieb | 3 / 8 |
+| Boost 5 V mit EN-Pin (z. B. TPS61023-Modul), nur für den Servo | nur während Bewegung an | 2 |
+| Spannungsteiler 2×1 MΩ + 100 nF | Akkuspannung messen | – |
+| PETG/ASA, Schrauben, Magnet (für AS5600) | Mechanik | 2 |
+| **Summe** | | **~20–25** |
+
+Gateway: beliebiger ESP32-C6/S3 + USB-Netzteil an der Heizung, ca. 10 €.
+
+## 6. Software
+
+### Repo-Struktur
+
+```
+protocol/        no_std-Crate: Nachrichten (serde + postcard), gemeinsam für Knoten und Gateway
+node/            no_std: esp-hal + embassy + esp-radio (ESP-NOW), Deep-Sleep, Motor
+gateway/         esp-idf-svc (std): WLAN + ESP-NOW + MQTT-Discovery + OTA + Sicherheitslogik
+hardware/        OpenSCAD (parametrisch), STL, Fotos/Maße
+homeassistant/   Regel-Automationen / Blueprint, Dashboard
+```
+
+### Protokoll (Entwurf)
+
+```rust
+// Knoten → Gateway
+struct Status { node: u8, seq: u16, position: u8, battery_mv: u16, flags: u8 }
+// Gateway → Knoten (Antwort in derselben Wachphase)
+struct Command { target: u8, min_position: u8, sleep_s: u16 }
+```
+
+ESP-NOW-Verschlüsselung (PMK/LMK) einschalten, damit Nachbarn nichts verstellen können.
+
+### Ablauf Knoten
+
+```
+Wake (Timer)
+ ├─ Zustand aus RTC-RAM (Position, Kanal, Umdrehungszähler)
+ ├─ Akku messen → zu niedrig? → auf 100 % fahren, lange schlafen
+ ├─ Status senden, ≤ 30 ms auf Command warten
+ │    └─ keine Antwort seit N Runden → Fail-Safe 100 %
+ ├─ target ≠ position? → Motor/Boost an, langsam fahren, aus
+ └─ Deep-Sleep(sleep_s)
+```
+
+## 7. Regelung in Home Assistant
+
+- Die vorhandenen Raumsensoren liefern den Istwert. Pro Raum gibt es einen Sollwert
+  (`input_number`) bzw. Zeitplan.
+- Eine Blueprint-Automation alle 5 min:
+  `Öffnung = clamp(15, 100, 50 + k · (Soll − Ist))`, mit Hysterese, damit nicht jeder
+  Zehntelgrad eine Bewegung auslöst (das spart Akku).
+- Die Luftfeuchte im Bad kann z. B. eine Mindestöffnung nach dem Duschen erzwingen.
+- Der Brenner regelt weiterhin über das vorhandene Thermostat. Die Lamellen verteilen nur.
+
+## 8. Vorgehen
+
+1. Knopf vermessen: Drehwinkel zu→auf, Drehmoment (schwergängig?), wandert er axial?,
+   Maße Flügel/Nabe, Befestigung des Gitters, Temperatur am Knopf.
+2. Mechanik-Prototyp für **ein** Gitter drucken (PETG), Antrieb mit Testsketch prüfen.
+3. Gateway + ein Knoten mit ESP-NOW und MQTT-Discovery.
+4. Eine Woche Testbetrieb (Akku-Verbrauch messen, Geräusch, Hitze).
+5. Rollout auf 7 Räume, HA-Regelung aktivieren, optional Schachtklappen.
