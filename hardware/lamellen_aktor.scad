@@ -33,6 +33,8 @@ fit         = 0.3;  // Spiel je Seite (PETG auf dem A1: 0,2–0,3)
 
 /* [Aufbau] */
 frame_w     = 25;   // Breite des Rahmenrands (gemessen), Knopf mittig
+space_below = 107.5; // Knopfmitte bis Rahmenunterkante (gemessen)
+space_above = 120;  // Knopfmitte bis Rahmenoberkante (gemessen)
 servo_dir   = 90;   // Servo baut nach oben, Akku und Elektronik nach unten (fest)
 
 /* [Getriebe] */
@@ -66,6 +68,7 @@ axle_d      = 6;        // Führungszapfen am Zwischenboden (nur Getriebe)
 akku        = "lipo";
 akku_dim    = akku == "lipo" ? [50, 20, 10] : [70, 18.6, 18.6];  // Länge, Breite, Höhe
 board_len   = akku == "lipo" ? 0 : 24;  // Lochraster-Platine: bei LiPo oben auf dem Akku
+akku_pos    = akku == "lipo" ? "unten" : "oben";  // Akku unter oder über dem Servo
 xiao_len    = 21.5;     // Seeed XIAO ESP32-C6 (21 × 17,8)
 xiao_w      = 17.8;
 
@@ -107,11 +110,13 @@ tab_half    = servo_hole_dist / 2 + 3.2;
 tab_top     = servo_center[1] + tab_half;
 tab_bot     = servo_center[1] - tab_half;
 boss_d      = 5;
-boss_top_y  = tab_top + 1 + boss_d / 2;
+akku_oben   = akku_pos == "oben";
+// Akku liegt längs entweder über oder unter dem Servo; Platine und XIAO immer unten
+akku_y0     = akku_oben ? tab_top + 1 : tab_bot - 1 - akku_dim[0];
+akku_y1     = akku_y0 + akku_dim[0];
+boss_top_y  = (akku_oben ? akku_y1 : tab_top) + 1 + boss_d / 2;
 y_top       = boss_top_y + boss_d / 2 + 0.5 + case_wall;
-akku_y1     = tab_bot - 1;                      // Akku liegt längs unter dem Servo
-akku_y0     = akku_y1 - akku_dim[0];
-boss_bot_y  = akku_y0 - 1 - board_len - boss_d / 2;
+boss_bot_y  = (akku_oben ? tab_bot : akku_y0) - 1 - board_len - boss_d / 2;
 xiao_y1     = boss_bot_y - boss_d / 2 - 1;
 xiao_y0     = xiao_y1 - xiao_len;
 y_bot       = xiao_y0 - 0.5 - case_wall;
@@ -126,6 +131,8 @@ echo(str("Gehäuse ", y_top - y_bot, " × ", frame_w, " × ", z_lid + lid_t,
 assert(akku_dim[1] <= inner_w, "Akku zu breit für den Rahmenrand");
 assert(xiao_w <= inner_w, "XIAO zu breit für den Rahmenrand");
 assert(servo_w + 0.6 <= inner_w, "Servo zu breit für den Rahmenrand");
+assert(-y_bot <= space_below, str("Gehäuse ragt ", -y_bot - space_below, " mm unten über den Rahmen – akku_pos = \"oben\" probieren"));
+assert(y_top <= space_above, str("Gehäuse ragt ", y_top - space_above, " mm oben über den Rahmen – akku_pos = \"unten\" probieren"));
 
 // ---------------------------------------------------------------- Zahnrad 2D
 function invd(a) = (tan(a) - a * PI / 180) * 180 / PI;

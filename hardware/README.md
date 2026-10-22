@@ -25,6 +25,7 @@ Servo, Akku und Mikrocontroller sitzen in **einem** Gehäuse auf dem Rahmenrand.
          │  Servo  │
   Knopf ─┼─────────┼─ Zwischenboden; darunter dreht die Hülse (seitlich offen)
          │  LiPo   │  ← Lochrasterplatine (MOSFETs, Teiler) liegt oben auf dem Akku
+         │         │    (18650: Akku über dem Servo, Platine hier)
          │         │
          ├ ─ ─ ─ ─ ┤  ← Schraubdom
          │  XIAO   │  Antenne zur Stirnwand, weg von Akku und Servo
@@ -34,9 +35,17 @@ Servo, Akku und Mikrocontroller sitzen in **einem** Gehäuse auf dem Rahmenrand.
 | Akku (`akku = …`) | Gehäuselänge | über / unter der Knopfachse | Laufzeit (Schätzung) |
 |---|---|---|---|
 | `"lipo"` – LiPo 102050, ca. 1000 mAh, 50 × 20 × 10 mm (Standard) | 125 mm | 31 / 94 mm | ca. eine Heizperiode |
-| `"18650"` – Rundzelle mit Lötfahnen und Schutzschaltung, ca. 3000 mAh | 169 mm | 31 / 138 mm | mehrere Jahre |
+| `"18650"` – Rundzelle mit Lötfahnen und Schutzschaltung, ca. 3000 mAh | 169 mm | 102 / 67 mm | mehrere Jahre |
 
-Bei der Variante „getriebe“ sitzt der Servo höher (61 mm über / 64 mm unter der Achse).
+Beim 18650 liegt der Akku automatisch **über** dem Servo (`akku_pos = "oben"`); Platine und
+XIAO bleiben unten. Gemessener Platz am Gitter: 107,5 mm unter und 120 mm über der
+Knopfmitte (`space_below`, `space_above`). OpenSCAD bricht mit einer Meldung ab, wenn das
+Gehäuse über den Rahmen hinausragen würde.
+
+| | direkt | getriebe |
+|---|---|---|
+| LiPo | passt (31 / 94 mm) | passt (61 / 64 mm) |
+| 18650 | passt (102 / 67 mm) | passt nicht (12 mm zu lang) |
 
 - **Wärme:** Der Akku liegt auf dem Zwischenboden etwa 30 mm über dem Rahmen. Durch den
   Luftspalt mit Lüftungsschlitzen darunter heizt der warme Rahmen den Akku kaum auf. Trotzdem
