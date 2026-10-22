@@ -37,7 +37,7 @@ zu prüfen.
 | Parameter | Bedeutung |
 |---|---|
 | `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 9 mm) |
-| `knob_h` | wie weit der Knopf aus dem Rahmen ragt (**noch messen**, Platzhalter 12 mm) |
+| `knob_h` | wie weit der Knopf aus dem Rahmen ragt (gemessen: 15 mm) |
 | `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
 | `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |
 | `feet` | Fußpositionen relativ zur Knopfachse, beide auf dem Rahmenrand |

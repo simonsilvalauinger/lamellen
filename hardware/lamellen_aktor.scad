@@ -24,8 +24,8 @@ variante = "direkt";   // "direkt" oder "getriebe"
 knob_len    = 35;   // Länge der Raute (Spitze bis Spitze)
 knob_w      = 9;    // Breite an der breitesten Stelle
 knob_angle  = 90;   // Richtung der Längsachse bei der Montage (90 = senkrecht)
-knob_h      = 12;   // wie weit der Knopf aus dem Rahmen ragt – NOCH MESSEN
-engage      = 7;    // so tief übergreift die Hülse den Knopf (≤ knob_h)
+knob_h      = 15;   // wie weit der Knopf aus dem Rahmen ragt (gemessen)
+engage      = 10;   // so tief übergreift die Hülse den Knopf (≤ knob_h)
 wall        = 2.4;  // Wandstärke der Hülse
 knob_travel = 45;   // Drehweg zu → auf
 fit         = 0.3;  // Spiel je Seite (PETG auf dem A1: 0,2–0,3)
