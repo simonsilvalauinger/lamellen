@@ -722,6 +722,21 @@ if (part == "assembly") {
 else if (part == "gehaeuse" || part == "halter") print_gehaeuse();
 else if (part == "deckel") print_deckel();
 else if (part == "ritzel") print_ritzel();
+// Einzelne Deckel in Druckorientierung (für 3MF/STL-Export)
+else if (part == "deckel_turm") rotate([180, 0, 0]) translate([0, 0, -(z_lid + lid_t)]) deckel_turm();
+else if (part == "deckel_akku") rotate([180, 0, 0]) translate([0, 0, -(z_akku_lid + lid_t)]) deckel_akku();
+else if (part == "deckel_elektronik") rotate([180, 0, 0]) translate([0, 0, -(z_elec_lid + lid_t)]) deckel_elektronik();
+// Teile in Einbaulage (für den STEP-Export nach Onshape); ref_* sind Platzhalter
+// für Servo, Knopf, Akku/Elektronik und Rahmen
+else if (part == "einbau_mitnehmer") mitnehmer();
+else if (part == "einbau_ritzel") ritzel();
+else if (part == "einbau_gehaeuse") gehaeuse();
+else if (part == "einbau_deckel_turm") deckel_turm();
+else if (part == "einbau_deckel_akku") deckel_akku();
+else if (part == "einbau_deckel_elektronik") deckel_elektronik();
+else if (part == "ref_servo") servo_dummy();
+else if (part == "ref_elektronik") electronics_dummy();
+else if (part == "ref_rahmen") frame_dummy();
 else if (part == "print") {
     print_mitnehmer();
     translate([45, 0, 0]) print_gehaeuse();

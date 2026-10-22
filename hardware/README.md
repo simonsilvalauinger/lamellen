@@ -9,6 +9,30 @@ Rahmenrand. Nur der Servoturm am Knopf ist hoch, Akku und Elektronik liegen flac
 
 ![Variante stirn](vorschau_stirn.png)
 
+## Dateien für Bambu Studio und Onshape
+
+Fertige Exporte der Standardvariante „stirn“ liegen in [`export/stirn/`](export/stirn/):
+
+| Datei | Wofür |
+|---|---|
+| `lamellen_stirn.3mf` | **Bambu Studio**: alle Druckteile, richtig ausgerichtet, auf einer Platte (195 × 187 mm). Öffnen, Material PETG wählen, für das Gehäuse Baumstützen aktivieren. |
+| `stl/*.stl` | dieselben Teile einzeln, z. B. um nur die Hülse als Passprobe zu drucken |
+| `lamellen_stirn_baugruppe.step` | **Onshape**: alle Teile in Einbaulage als benannte, eingefärbte Volumenkörper, dazu Platzhalter für Servo, Knopf, Akku/Elektronik und Rahmen (`ref_*`) |
+| `step/*.step` | **Onshape**: jedes Teil einzeln in Einbaulage |
+
+In Onshape: *Import* → STEP-Datei wählen → „Import as a single part studio“ für die
+Baugruppe. Die Teile sind echte Volumenkörper, ebene Flächen sind zusammengefasst. So lässt
+sich messen, skizzieren und mit eigenen Features weiterarbeiten. Gekrümmte Flächen
+(Zahnflanken, Bohrungen) bestehen aus vielen kleinen ebenen Facetten.
+
+Die Quelle bleibt `lamellen_aktor.scad`. Nach jeder Änderung die Exporte neu erzeugen:
+
+```sh
+python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
+.venv/bin/python tools/export.py            # Standardvariante „stirn“
+.venv/bin/python tools/export.py kegel      # weitere Varianten nach export/<variante>/
+```
+
 ## Varianten
 
 | | **„stirn“ (Standard)** | „kegel“ | „direkt“ | „getriebe“ |

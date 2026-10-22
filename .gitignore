@@ -1,2 +1,5 @@
 target/
+# Einzelexporte beim Arbeiten; die fertigen Exporte liegen in hardware/export/
 *.stl
+!hardware/export/**/*.stl
+.venv/
