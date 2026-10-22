@@ -13,13 +13,13 @@
 //                verschraubt, ca. 35 mm hoch; die Zahnräder ragen auf beiden
 //                Seiten 9,5 mm über den Rahmenrand. Standard.
 //   "kegel"    – MG90S (180°) liegt flach unter dem Knopf, zwei gleiche
-//                Kegelräder (1:1) lenken um 90° auf den Knopf um, ca. 39 mm hoch.
+//                Kegelräder (1:1) lenken um 90° auf den Knopf um, ca. 41 mm hoch.
 //                Nur der Servo ragt 4,3 mm zur Lamellenseite über. (Ein Kronenrad
 //                geht bei 1:1 nicht: seine Zähne würden innen unterschnitten.)
 //   "direkt"   – MG90S steht koaxial vor dem Knopf, das Horn treibt die Hülse
-//                direkt an. Wenigste Teile, aber ca. 55 mm hoch.
+//                direkt an. Wenigste Teile, aber ca. 57 mm hoch.
 //   "getriebe" – 270°-Microservo steht versetzt, 24er-Ritzel auf 36er-Zahnrad
-//                (1:1,5) für mehr Drehmoment, ca. 58 mm hoch.
+//                (1:1,5) für mehr Drehmoment, ca. 60 mm hoch.
 //
 // Export:  openscad -D 'part="mitnehmer"' -o mitnehmer.stl lamellen_aktor.scad
 // Teile:   "assembly", "mitnehmer", "gehaeuse", "deckel", "ritzel"
@@ -33,9 +33,9 @@ variante  = "stirn";   // "stirn", "kegel", "direkt" oder "getriebe"
 
 /* [Knopf (rautenförmig, von vorn gesehen)] */
 knob_len    = 35;   // Länge der Raute (Spitze bis Spitze)
-knob_w      = 9;    // Breite an der breitesten Stelle
+knob_w      = 10;   // Breite an der breitesten Stelle (gemessen)
 knob_angle  = 90;   // Richtung der Längsachse bei der Montage (90 = senkrecht)
-knob_h      = 15;   // wie weit der Knopf aus dem Rahmen ragt (gemessen)
+knob_h      = 17;   // wie weit der Knopf aus dem Rahmen ragt (gemessen)
 engage      = 10;   // so tief übergreift die Hülse den Knopf (≤ knob_h)
 wall        = 2.4;  // Wandstärke der Hülse
 knob_travel = 180;  // Drehweg des Knopfs zu → auf (Lamellen dabei ca. 75°)

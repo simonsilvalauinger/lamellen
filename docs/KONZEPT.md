@@ -16,7 +16,7 @@
 - 7 Raumauslässe, **alle** sollen gesteuert werden (auch Wohnzimmer und Küche).
 - Die Lamellen werden über einen Drehknopf verstellt, der wie eine Flügelmutter aus Kunststoff aussieht.
   Der Knopf dreht 180°, die Lamellen dabei ca. 75°. Er wandert nicht axial. Geschlossen
-  überlappen sich die Lamellen. Knopf: Raute 35 × 9 mm, ragt 15 mm aus dem Rahmen.
+  überlappen sich die Lamellen. Knopf: Raute 35 × 10 mm, ragt 17 mm aus dem Rahmen.
 - Die Gitter sind nur geklemmt (keine Schrauben).
 - **An den Gittern gibt es keine Steckdosen** → Batteriebetrieb.
 - Klappen gibt es nur am Anfang der Schächte (an der Heizung, dort gibt es Strom).
@@ -41,8 +41,8 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 > teils ein Möbel. Der Aktor baut deshalb entlang des Rahmenrands. Standard ist ein
 > Zahnkranz an der Hülse, in den das Ritzel eines kopfüber stehenden 180°-Servos (MG90S)
 > greift (Variante „stirn“, 1:1, 35 mm hoch; die Zahnräder ragen 9,5 mm über den Rand).
-> Alternativen: liegender Servo mit Kegelrädern („kegel“, 39 mm), Servo koaxial vor dem
-> Knopf („direkt“, 55 mm) oder 270°-Servo mit Stirnrädern 1:1,5 („getriebe“). Servo, Akku (18650 oder LiPo) und XIAO sitzen
+> Alternativen: liegender Servo mit Kegelrädern („kegel“, 41 mm), Servo koaxial vor dem
+> Knopf („direkt“, 57 mm) oder 270°-Servo mit Stirnrädern 1:1,5 („getriebe“). Servo, Akku (18650 oder LiPo) und XIAO sitzen
 > in einem gestuften, 25 mm breiten Gehäuse: Servoturm über dem Knopf, Akku- und
 > Elektronikfach flach daneben. Es wird mit VHB auf den Rahmen geklebt.
 

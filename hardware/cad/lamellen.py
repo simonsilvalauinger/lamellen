@@ -21,9 +21,9 @@ import cadquery as cq
 class Params:
     # Knopf (rautenförmig, von vorn gesehen)
     knob_len: float = 35
-    knob_w: float = 9
+    knob_w: float = 10
     knob_angle: float = 90
-    knob_h: float = 15
+    knob_h: float = 17
     wall: float = 2.4
     fit: float = 0.3
     # Rahmen

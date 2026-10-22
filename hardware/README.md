@@ -1,7 +1,7 @@
 # Hardware: Lamellen-Aktor
 
 Für Edelstahl-Lüftungsgitter mit einem kleinen, rautenförmigen Drehknopf auf dem
-Rahmenrand. Der Knopf ist 35 × 9 mm groß und ragt 15 mm heraus. Er dreht 180° und verstellt
+Rahmenrand. Der Knopf ist 35 × 10 mm groß und ragt 17 mm heraus. Er dreht 180° und verstellt
 die Lamellen dabei um ca. 75°. Im geschlossenen Zustand überlappen sich die Lamellen.
 
 Servo, Akku und Mikrocontroller sitzen in **einem** Gehäuse auf dem 25 mm breiten
@@ -55,7 +55,7 @@ python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
 | | **„stirn“ (Standard)** | „kegel“ | „direkt“ | „getriebe“ |
 |---|---|---|---|---|
 | Antrieb | Zahnkranz an der Hülse, MG90S (180°) steht kopfüber unter dem Knopf, Stirnräder 1:1 | MG90S liegt flach, zwei Kegelräder 1:1 | MG90S steht koaxial vor dem Knopf | 270°-Servo versetzt, Stirnräder 1:1,5 |
-| Höhe Servoturm | **35 mm** | 39 mm | 55 mm | 58 mm |
+| Höhe Servoturm | **35 mm** | 41 mm | 57 mm | 60 mm |
 | Gehäuselänge | **187 mm** | 215 mm | 201 mm | 208 mm |
 | Überstand seitlich | Zahnräder 9,5 mm auf **beiden** Seiten (nur 2,5–7 mm über dem Rahmen) | Servo 4,3 mm zur Lamellenseite | – | – |
 | Zahnräder | robuste Stirnräder | kleine Kegelräder, druckkritisch | keine | Stirnräder |
@@ -110,14 +110,14 @@ bricht mit einer Meldung ab, wenn das Gehäuse über den Rahmen hinausragen wür
 | Variante, Akku | Gehäuselänge | über / unter der Knopfmitte | Höhe Turm / Akkufach / Elektronikfach |
 |---|---|---|---|
 | **stirn, 18650** | 187 mm | 109,5 / 77,5 mm | 35 / 25 / – mm |
-| kegel, 18650 | 215 mm | 112 / 103 mm | 39 / 25 / 15 mm |
-| direkt, 18650 | 201 mm | 112 / 89 mm | 55 / 25 / 15 mm |
-| getriebe, LiPo | 208 mm | 119 / 89 mm | 58 / 17 / 15 mm |
+| kegel, 18650 | 215 mm | 112 / 103 mm | 41 / 25 / 15 mm |
+| direkt, 18650 | 201 mm | 112 / 89 mm | 57 / 25 / 15 mm |
+| getriebe, LiPo | 208 mm | 119 / 89 mm | 60 / 17 / 15 mm |
 
 ```
           Seitenansicht (kegel, 18650)
 
-                ┌───────────┐ 39 mm
+                ┌───────────┐ 41 mm
                 │Servo ⟂Kegel│      ┌──────────────────┐ 25 mm
    ┌──────┐     │   Knopf    │      │   18650-Akku     │
    │XIAO│Plat.  │            │      │                  │
@@ -157,8 +157,8 @@ zu prüfen.
 
 | Parameter | Bedeutung |
 |---|---|
-| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 9 mm) |
-| `knob_h` | wie weit der Knopf aus dem Rahmen ragt (gemessen: 15 mm) |
+| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 10 mm) |
+| `knob_h` | wie weit der Knopf aus dem Rahmen ragt (gemessen: 17 mm) |
 | `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
 | `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |
 | `frame_w` | Breite des Rahmenrands = Gehäusebreite (gemessen: 25 mm) |
