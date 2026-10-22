@@ -40,7 +40,7 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 > Edelstahlgitter mit einem kleinen Drehknopf auf dem linken Rahmenrand, direkt daneben steht
 > teils ein Möbel. Der Aktor baut deshalb entlang des Rahmenrands. Standard ist ein
 > Zahnkranz an der Hülse, in den das Ritzel eines kopfüber stehenden 180°-Servos (MG90S)
-> greift (Variante „stirn“, 1:1, 35 mm hoch; die Zahnräder ragen 9,5 mm über den Rand).
+> greift (Variante „stirn“, 1:1, 35 mm hoch; die Zahnräder ragen 10 mm über den Rand).
 > Alternativen: liegender Servo mit Kegelrädern („kegel“, 41 mm), Servo koaxial vor dem
 > Knopf („direkt“, 57 mm) oder 270°-Servo mit Stirnrädern 1:1,5 („getriebe“). Servo, Akku (18650 oder LiPo) und XIAO sitzen
 > in einem gestuften, 25 mm breiten Gehäuse: Servoturm über dem Knopf, Akku- und

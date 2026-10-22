@@ -7,11 +7,11 @@
 // Knopf ist hoch, der Akku (oben) liegt flach daneben direkt auf dem Rahmen.
 //
 // Varianten:
-//   "stirn"    – Die Hülse trägt unten einen Zahnkranz (42 Z.) direkt über dem
+//   "stirn"    – Die Hülse trägt unten einen Zahnkranz (Zähnezahl aus der Knopflänge) direkt über dem
 //                Rahmen. Der MG90S steht kopfüber unter dem Knopf, sein Ritzel
-//                (42 Z., 1:1) kämmt in derselben Ebene. Robuste Stirnräder, Servo
+//                (gleiche Zähnezahl, 1:1) kämmt in derselben Ebene. Robuste Stirnräder, Servo
 //                verschraubt, ca. 35 mm hoch; die Zahnräder ragen auf beiden
-//                Seiten 9,5 mm über den Rahmenrand. Standard.
+//                Seiten ca. 10 mm über den Rahmenrand. Standard.
 //   "kegel"    – MG90S (180°) liegt flach unter dem Knopf, zwei gleiche
 //                Kegelräder (1:1) lenken um 90° auf den Knopf um, ca. 41 mm hoch.
 //                Nur der Servo ragt 4,3 mm zur Lamellenseite über. (Ein Kronenrad
@@ -32,8 +32,8 @@ show_lids = false;
 variante  = "stirn";   // "stirn", "kegel", "direkt" oder "getriebe"
 
 /* [Knopf (rautenförmig, von vorn gesehen)] */
-knob_len    = 35;   // Länge der Raute (Spitze bis Spitze)
-knob_w      = 12.25; // Breite an der breitesten Stelle (gemessen 10, +2,25 nach Passprobe)
+knob_len    = 36.5; // Länge der Raute (gemessen 35, Passprobe: mind. +1,5 – Längenserie drucken)
+knob_w      = 13.25; // Breite an der breitesten Stelle (gemessen 10, Breitenserie: 13,25 passt)
 knob_angle  = 90;   // Richtung der Längsachse bei der Montage (90 = senkrecht)
 knob_h      = 17;   // wie weit der Knopf aus dem Rahmen ragt (gemessen)
 engage      = 10;   // so tief übergreift die Hülse den Knopf (≤ knob_h)
@@ -57,8 +57,10 @@ servo_side  = 1;    // Servogehäuse ragt nach +x (1 = Lamellenseite) oder −x
 
 /* [Zahnkranz an der Hülse (Variante stirn)] */
 spur_m      = 1;
-spur_z      = 42;   // Zahnkranz; Fußkreis muss die Hülse umschließen
-spur_pz     = 42;   // Ritzel am Servo (= spur_z → 1:1 für 180°-Servo)
+// Zahnkranz: kleinste Zähnezahl, deren Fußkreis die Hülse (knob_len/2 + fit + 1,2)
+// mit 0,3 mm Abstand umschließt; wächst also mit der Knopflänge mit
+spur_z      = ceil(2 * ((knob_len / 2 + fit + 1.2 + 0.3) / spur_m + 1.25));
+spur_pz     = spur_z;  // Ritzel am Servo (= spur_z → 1:1 für 180°-Servo)
 spur_t      = 4.5;  // Zahnbreite
 spur_gap    = 2.5;  // Rahmen bis Unterseite Ritzel/Zahnkranz (Platz für Hornschraube)
 servo_tab_from_top = 4.6;  // Servo-Oberseite bis Unterseite der Laschen – nachmessen

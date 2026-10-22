@@ -15,7 +15,7 @@ Fertige Exporte der Standardvariante „stirn“ liegen in [`export/stirn/`](exp
 
 | Datei | Wofür |
 |---|---|
-| `lamellen_stirn.3mf` | **Bambu Studio**: alle Druckteile, richtig ausgerichtet, auf einer Platte (195 × 187 mm). Öffnen, Material PETG wählen, für das Gehäuse Baumstützen aktivieren. |
+| `lamellen_stirn.3mf` | **Bambu Studio**: alle Druckteile, richtig ausgerichtet, auf einer Platte (197 × 188 mm). Öffnen, Material PETG wählen, für das Gehäuse Baumstützen aktivieren. |
 | `stl/*.stl` | dieselben Teile einzeln, z. B. um nur die Hülse als Passprobe zu drucken |
 | `lamellen_stirn_baugruppe.step` | **Onshape**: alle Teile in Einbaulage, benannt und eingefärbt, dazu Platzhalter für Servo, Knopf, Akku, Elektronik und Rahmen (`ref_*`) |
 | `step/*.step` | **Onshape**: jedes Teil einzeln in Einbaulage |
@@ -23,17 +23,23 @@ Fertige Exporte der Standardvariante „stirn“ liegen in [`export/stirn/`](exp
 In Onshape: *Import* → STEP-Datei wählen → „Import as a single part studio“ für die
 Baugruppe.
 
-### Kalibrierserie für die Hülse
+### Kalibrierserien für die Hülse
 
-[`export/kalibrierung/huelse_passprobe.3mf`](export/kalibrierung/) enthält fünf kurze,
-offene Hülsenringe (8 mm hoch, ohne Zahnkranz) mit `knob_w` = 11,25 / 11,75 / 12,25 / 12,75 /
-13,25 mm, also dem aktuellen Wert ± 1 mm in 0,5-mm-Schritten. Der Wert ist in die Lasche eingraviert. Druckzeit nur wenige Minuten.
+Kurze, offene Hülsenringe (8 mm hoch, ohne Zahnkranz), Wert in die Lasche graviert, Druckzeit
+nur wenige Minuten. Spiel und Wandstärke entsprechen genau der echten Hülse.
+
+| Datei | variiert | Proben |
+|---|---|---|
+| [`export/kalibrierung/huelse_laenge.3mf`](export/kalibrierung/) | Länge `knob_len` | L36,5 / L37,0 / L37,5 / L38,0 / L38,5 (Breite 13,25) |
+| [`export/kalibrierung/huelse_breite.3mf`](export/kalibrierung/) | Breite `knob_w` | 12,25 / 12,75 / 13,25 / 13,75 / 14,25 (Länge 36,5) |
+
+Stand: Die Breitenserie hat 13,25 mm ergeben. Die Hülse war danach noch mindestens 1,5 mm zu
+kurz, deshalb steht `knob_len` jetzt auf 36,5 mm und die Längenserie prüft nur längere Werte.
 
 Alle Ringe nacheinander auf den Knopf stecken. Der passende Ring sitzt ohne Kraft, wackelt aber
-kaum. Seinen Wert als `knob_w` in `lamellen_aktor.scad` und `cad/lamellen.py` eintragen und neu
-exportieren. Länge, Spiel und Wandstärke entsprechen genau der echten Hülse. Andere
-Die Serie legt sich immer um den aktuellen `knob_w`. Andere Schritte: `STEPS` in
-`cad/kalibrierung.py` ändern und `python3 cad/kalibrierung.py` ausführen.
+kaum. Seinen Wert in `lamellen_aktor.scad` und `cad/lamellen.py` eintragen und neu exportieren.
+Die Serien legen sich immer um den aktuellen Wert. Andere Schritte: `SERIES` in
+`cad/kalibrierung.py` ändern und `python3 cad/kalibrierung.py [breite|laenge]` ausführen.
 
 ### Exaktes CAD-Modell
 
@@ -68,8 +74,8 @@ python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
 |---|---|---|---|---|
 | Antrieb | Zahnkranz an der Hülse, MG90S (180°) steht kopfüber unter dem Knopf, Stirnräder 1:1 | MG90S liegt flach, zwei Kegelräder 1:1 | MG90S steht koaxial vor dem Knopf | 270°-Servo versetzt, Stirnräder 1:1,5 |
 | Höhe Servoturm | **35 mm** | 41 mm | 57 mm | 60 mm |
-| Gehäuselänge | **187 mm** | 215 mm | 201 mm | 208 mm |
-| Überstand seitlich | Zahnräder 9,5 mm auf **beiden** Seiten (nur 2,5–7 mm über dem Rahmen) | Servo 4,3 mm zur Lamellenseite | – | – |
+| Gehäuselänge | **188 mm** | 215 mm | 202 mm | 208 mm |
+| Überstand seitlich | Zahnräder 10 mm auf **beiden** Seiten (nur 2,5–7 mm über dem Rahmen) | Servo 4,3 mm zur Lamellenseite | – | – |
 | Zahnräder | robuste Stirnräder | kleine Kegelräder, druckkritisch | keine | Stirnräder |
 | Servo befestigt mit | Laschen (verschraubt) | Bett und Niederhalter | Laschen | Laschen |
 | Akku | 18650 oder LiPo | 18650 oder LiPo | 18650 oder LiPo | nur LiPo |
@@ -80,10 +86,11 @@ Variante wählen: `variante = "stirn";` (oder `"kegel"`, `"direkt"`, `"getriebe"
 
 ### Hinweise zur Variante „stirn“
 
-- Der Zahnkranz umschließt die Hülse direkt über dem Rahmen. Deshalb hat er 44 mm
-  Außendurchmesser und ragt auf **beiden** Seiten 9,5 mm über den Rahmenrand, ebenso das
-  gleich große Ritzel darunter. **Prüfen, ob zum Möbel hin 10 mm frei sind.** Die
-  Knopfspitzen brauchen schon heute 5 mm.
+- Der Zahnkranz umschließt die Hülse direkt über dem Rahmen. Seine Zähnezahl ergibt sich
+  automatisch aus der Knopflänge (bei 36,5 mm: 43 Zähne, 45 mm Außendurchmesser). Er ragt
+  auf **beiden** Seiten 10 mm über den Rahmenrand, ebenso das gleich große Ritzel darunter.
+  **Prüfen, ob zum Möbel hin 10,5 mm frei sind.** Die Knopfspitzen brauchen schon heute
+  etwa 5 mm.
 - Der Servo steht kopfüber: Welle und Ritzel zeigen zum Rahmen, die Laschen liegen auf einem
   Boden und werden verschraubt. Das volle einarmige Horn liegt in der Tasche des Ritzels,
   ungekürzt.
@@ -121,7 +128,7 @@ bricht mit einer Meldung ab, wenn das Gehäuse über den Rahmen hinausragen wür
 
 | Variante, Akku | Gehäuselänge | über / unter der Knopfmitte | Höhe Turm / Akkufach / Elektronikfach |
 |---|---|---|---|
-| **stirn, 18650** | 187 mm | 109,5 / 77,5 mm | 35 / 25 / – mm |
+| **stirn, 18650** | 188 mm | 108,75 / 79 mm | 35 / 25 / – mm |
 | kegel, 18650 | 215 mm | 112 / 103 mm | 41 / 25 / 15 mm |
 | direkt, 18650 | 201 mm | 112 / 89 mm | 57 / 25 / 15 mm |
 | getriebe, LiPo | 208 mm | 119 / 89 mm | 60 / 17 / 15 mm |
@@ -169,7 +176,7 @@ zu prüfen.
 
 | Parameter | Bedeutung |
 |---|---|
-| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 10 mm; `knob_w` = 12,25 nach der Passprobe) |
+| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 10 mm; nach Kalibrierung `knob_len` = 36,5, `knob_w` = 13,25) |
 | `knob_h` | wie weit der Knopf aus dem Rahmen ragt (gemessen: 17 mm) |
 | `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
 | `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |

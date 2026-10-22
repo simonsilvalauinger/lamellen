@@ -12,7 +12,7 @@ Die Parameter in `P` müssen zu `lamellen_aktor.scad` passen;
 """
 
 from dataclasses import dataclass
-from math import acos, cos, degrees, pi, radians, sin, sqrt, tan
+from math import acos, ceil, cos, degrees, radians, sin, tan
 
 import cadquery as cq
 
@@ -20,8 +20,8 @@ import cadquery as cq
 @dataclass(frozen=True)
 class Params:
     # Knopf (rautenförmig, von vorn gesehen)
-    knob_len: float = 35
-    knob_w: float = 12.25   # gemessen 10, +2,25 nach Passprobe
+    knob_len: float = 36.5   # gemessen 35, Passprobe: mind. +1,5 – Längenserie drucken
+    knob_w: float = 13.25   # gemessen 10, Breitenserie: 13,25 passt
     knob_angle: float = 90
     knob_h: float = 17
     wall: float = 2.4
@@ -30,8 +30,6 @@ class Params:
     frame_w: float = 25
     # Zahnkranz an der Hülse und Ritzel
     spur_m: float = 1
-    spur_z: int = 42
-    spur_pz: int = 42
     spur_t: float = 4.5
     spur_gap: float = 2.5
     backlash: float = 0.15
@@ -71,6 +69,12 @@ class Params:
     def bell_r(self): return self.knob_len / 2 + self.fit + 1.2
     @property
     def bell_z0(self): return self.spur_gap
+    @property
+    def spur_z(self):
+        # kleinste Zähnezahl, deren Fußkreis die Hülse mit 0,3 mm Abstand umschließt
+        return ceil(2 * ((self.bell_r + 0.3) / self.spur_m + 1.25))
+    @property
+    def spur_pz(self): return self.spur_z   # 1:1 für 180°-Servo
     @property
     def inner_w(self): return self.frame_w - 2 * self.case_wall
     @property
