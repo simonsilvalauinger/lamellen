@@ -1,6 +1,7 @@
 # Hardware: Lamellen-Aktor
 
-Für Edelstahl-Lüftungsgitter mit einem kleinen Drehknopf auf dem Rahmenrand. Der Knopf
+Für Edelstahl-Lüftungsgitter mit einem kleinen, rautenförmigen Drehknopf auf dem Rahmenrand
+(35 × 9 mm). Der Knopf
 verstellt die Lamellen um 45° und dreht sich dabei nur, ohne vor oder zurück zu wandern.
 Der Aktor baut **nur entlang des Rahmenrands** (Standard: Servo oberhalb des Knopfs). Er
 verdeckt keine Lamellen und passt neben Möbel, die direkt am Gitter stehen.
@@ -18,7 +19,7 @@ Variante wählen: `variante = "direkt";` oder `"getriebe"` oben in `lamellen_akt
 
 | Teil | Material | Ausrichtung |
 |---|---|---|
-| `mitnehmer` – Glocke über dem Knopf (+ Zahnsegment) | PETG, bei > 60 °C am Knopf ASA | wird automatisch richtig gedreht, keine Stützen |
+| `mitnehmer` – Rautenhülse über dem Knopf (+ Zahnsegment) | PETG, bei > 60 °C am Knopf ASA | wird automatisch richtig gedreht, keine Stützen |
 | `halter` – Platte mit Servoausschnitt, zwei Füße | PETG | Platte aufs Bett, **Baumstützen nur unter den Füßen** |
 | `ritzel` (nur getriebe) | PETG, 100 % Infill | flach |
 
@@ -35,9 +36,10 @@ zu prüfen.
 
 | Parameter | Bedeutung |
 |---|---|
-| `knob_span`, `knob_wing_t` | größte Breite des Knopfs und Breite quer dazu |
-| `knob_hub_d`, `knob_h` | Durchmesser des runden Fußes, Höhe über dem Rahmen |
-| `engage` | wie tief die Glocke über den Knopf greift (≤ `knob_h`) |
+| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 9 mm) |
+| `knob_h` | wie weit der Knopf aus dem Rahmen ragt (**noch messen**, Platzhalter 12 mm) |
+| `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
+| `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |
 | `feet` | Fußpositionen relativ zur Knopfachse, beide auf dem Rahmenrand |
 | `foot_size` | Klebefläche; Breite (x) ≤ Breite des Rahmenrands |
 | `servo_dir` | 90 = Servo über dem Knopf, 270 = darunter |
@@ -56,10 +58,11 @@ Einheit und lassen sich zum Reinigen zusammen herausziehen.
 **Direkt:**
 1. Das einarmige Horn mit der Mittelschraube auf den Servo schrauben (Stellung siehe
    Kalibrierung in `firmware/README.md`).
-2. Die Glocke mit der Tasche auf das Horn drücken. Zwei kleine Hornschrauben von innen durch
-   die Glocke in die Hornlöcher drehen.
+2. Die Hülse mit der Tasche auf das Horn drücken. Die Hornachse muss dabei entlang der
+   Rautenlängsachse liegen. Zwei kleine Hornschrauben von innen durch das Dach in die
+   Hornlöcher drehen.
 3. Den Servo von vorn durch die Platte stecken und an den Laschen festschrauben.
-4. Den Aktor mit der Glocke über den Knopf setzen und die Füße aufkleben.
+4. Den Aktor mit der Hülse über den Knopf setzen und die Füße aufkleben.
 
 **Getriebe:**
 1. Horn auf 9 mm ab Wellenmitte kürzen, in die Tasche des Ritzels legen und mit zwei kleinen

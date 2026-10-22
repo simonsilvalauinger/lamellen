@@ -20,12 +20,13 @@
 part     = "assembly";
 variante = "direkt";   // "direkt" oder "getriebe"
 
-/* [Knopf] */
-knob_span   = 26;   // größte Breite des Knopfs (über die Flügel)
-knob_wing_t = 8;    // Breite quer dazu (Dicke des Flügelteils)
-knob_hub_d  = 12;   // Durchmesser des runden Fußes
-knob_h      = 15;   // Höhe des Knopfs über der Rahmenfläche
-engage      = 8;    // so tief übergreift die Glocke den Knopf
+/* [Knopf (rautenförmig, von vorn gesehen)] */
+knob_len    = 35;   // Länge der Raute (Spitze bis Spitze)
+knob_w      = 9;    // Breite an der breitesten Stelle
+knob_angle  = 90;   // Richtung der Längsachse bei der Montage (90 = senkrecht)
+knob_h      = 12;   // wie weit der Knopf aus dem Rahmen ragt – NOCH MESSEN
+engage      = 7;    // so tief übergreift die Hülse den Knopf (≤ knob_h)
+wall        = 2.4;  // Wandstärke der Hülse
 knob_travel = 45;   // Drehweg zu → auf
 fit         = 0.3;  // Spiel je Seite (PETG auf dem A1: 0,2–0,3)
 
@@ -63,7 +64,7 @@ $fn = 64;
 // ---------------------------------------------------------------- Ableitungen
 function dir(a) = [cos(a), sin(a)];
 
-bell_r      = max(knob_span, knob_wing_t) / 2 + fit + 2.4;
+bell_r      = knob_len / 2 + fit + wall;  // Reichweite der Hülse ab Achse
 bell_z0     = knob_h - engage;
 roof_t      = 4.5;
 direct      = variante == "direkt";
@@ -128,10 +129,19 @@ module horn_pocket2d() {
     }
 }
 
+module knob2d() {
+    rotate(knob_angle) polygon([[knob_len / 2, 0], [0, knob_w / 2], [-knob_len / 2, 0], [0, -knob_w / 2]]);
+}
+
 module knob_cavity(h) {
-    translate([-(knob_span / 2 + fit), -(knob_wing_t / 2 + fit), 0])
-        cube([knob_span + 2 * fit, knob_wing_t + 2 * fit, h]);
-    cylinder(d = knob_hub_d + 2 * fit, h = h);
+    linear_extrude(h) offset(delta = fit) knob2d();
+}
+
+// Hülse um den Knopf; ab Knopfoberkante darf sie breiter werden (Dach = 2D-Kind)
+module sleeve(z_top) {
+    translate([0, 0, bell_z0]) linear_extrude(knob_h + fit - bell_z0 + 0.01)
+        offset(r = wall) offset(delta = fit) knob2d();
+    translate([0, 0, knob_h + fit]) linear_extrude(z_top - knob_h - fit) children();
 }
 
 // ---------------------------------------------------------------- Teile
@@ -139,8 +149,12 @@ module knob_cavity(h) {
 // Das Horn wird von innen mit zwei kleinen Schrauben in der Tasche fixiert.
 module mitnehmer_direkt() {
     top = knob_h + fit + roof_t;
+    module roof2d() hull() {
+        offset(r = wall) offset(delta = fit) knob2d();
+        rotate(servo_dir + 180) offset(r = 2.4) horn_pocket2d();
+    }
     difference() {
-        translate([0, 0, bell_z0]) cylinder(r = bell_r, h = top - bell_z0);
+        sleeve(top) roof2d();
         translate([0, 0, bell_z0 - 1]) knob_cavity(engage + 1 + fit);
         // Horntasche, Arm zeigt vom Servo weg
         translate([0, 0, top - horn_t]) rotate(servo_dir + 180) linear_extrude(horn_t + 1) horn_pocket2d();
@@ -154,9 +168,14 @@ module mitnehmer_direkt() {
 
 // Mitnehmer „getriebe“: Glocke + Zahnsegment Richtung Servo.
 module mitnehmer_getriebe() {
+    module roof2d() hull() {
+        offset(r = wall) offset(delta = fit) knob2d();
+        circle(d = axle_d + 6);
+    }
     difference() {
         union() {
-            translate([0, 0, bell_z0]) cylinder(r = bell_r, h = gear_z0 + gear_t - bell_z0);
+            sleeve(gear_z0) roof2d();
+            translate([0, 0, gear_z0 - 0.01]) linear_extrude(gear_t + 0.01) offset(r = wall) offset(delta = fit) knob2d();
             translate([0, 0, gear_z0]) linear_extrude(gear_t) intersection() {
                 gear2d(gear_m, z_knob);
                 wedge2d(r_knob_gear + 2 * gear_m, servo_dir - sector / 2, servo_dir + sector / 2);
@@ -227,10 +246,7 @@ module frame_dummy() {
     // Rahmenrand ca. 30 mm breit, Knopf mittig; rechts beginnen die Lamellen
     color("silver", 0.6) translate([-15, -120, -1.5]) cube([30, 240, 1.5]);
     color("dimgray", 0.6) translate([15, -120, -6]) cube([200, 240, 1.5]);
-    color("black") {
-        cylinder(d = knob_hub_d, h = knob_h);
-        translate([-knob_span / 2, -knob_wing_t / 2, bell_z0]) cube([knob_span, knob_wing_t, engage]);
-    }
+    color("black") linear_extrude(knob_h) knob2d();
 }
 
 // ---------------------------------------------------------------- Ausgabe
