@@ -26,7 +26,7 @@ unbekannter Raum führt schon zu einem Compilerfehler.
 
 ```sh
 cd node
-LAMELLE_ROOM=schlafzimmer LAMELLE_CLOSED_US=1125 LAMELLE_OPEN_US=1875 cargo run --release
+LAMELLE_ROOM=schlafzimmer LAMELLE_CLOSED_US=1250 LAMELLE_OPEN_US=1750 cargo run --release
 ```
 
 Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeitszimmer`,
@@ -34,8 +34,13 @@ Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeits
 
 ### Kalibrieren
 
-1. Den Knoten zunächst ohne Ritzel flashen. Nach dem Flashen fährt er auf `LAMELLE_OPEN_US` (100 %).
-2. Das Gitter von Hand ganz öffnen und das Ritzel so aufsetzen, dass es passt.
+Standardwerte: Variante „direkt“ 1250/1750 µs, Variante „getriebe“ etwa 750/2250 µs.
+
+1. Den Knoten flashen, bevor der Servo mit dem Gitter verbunden ist. Nach dem Flashen fährt
+   er auf `LAMELLE_OPEN_US` (100 %).
+2. Das Gitter von Hand ganz öffnen und das Horn (direkt) bzw. das Ritzel (getriebe) in dieser
+   Stellung aufsetzen. Die Kerbverzahnung der Welle rastet in 18°-Schritten, den Rest gleicht
+   die Kalibrierung aus.
 3. `LAMELLE_CLOSED_US` so lange anpassen, bis „0 %“ genau „zu“ ist. Ist die Drehrichtung
    falsch, die beiden Werte tauschen.
 4. Ohne Gateway öffnet der Knoten nach 3 h von selbst ganz (Fail-Safe). Zum Testen

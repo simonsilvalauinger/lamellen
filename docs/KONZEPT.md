@@ -35,9 +35,11 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 
 ## 3. Mechanik
 
-> **Umgesetzt:** `hardware/lamellen_aktor.scad`, siehe `hardware/README.md`. Gewählt wurde
-> ein MG90S mit 1:3-Zahnradstufe (135° Servo = 45° Lamelle) und einem Halter auf zwei Füßen,
-> die auf dem Gitterrahmen kleben oder verschraubt sind.
+> **Umgesetzt:** `hardware/lamellen_aktor.scad`, siehe `hardware/README.md`. Die Gitter sind
+> Edelstahlgitter mit einem kleinen Drehknopf auf dem linken Rahmenrand, direkt daneben steht
+> teils ein Möbel. Der Aktor baut deshalb nur entlang des Rahmenrands: MG90S koaxial vor dem
+> Knopf (Variante „direkt“) oder mit 1:3-Zahnsegment (Variante „getriebe“, z. B. für das große
+> Wohnzimmergitter). Die Füße werden mit VHB auf den Rahmen geklebt.
 
 ### Kopplung an die Flügelmutter
 

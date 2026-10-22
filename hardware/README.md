@@ -1,52 +1,72 @@
 # Hardware: Lamellen-Aktor
 
-![Baugruppe](vorschau.png)
+Für Edelstahl-Lüftungsgitter mit einem kleinen Drehknopf auf dem Rahmenrand. Der Knopf
+verstellt die Lamellen um 45° und dreht sich dabei nur, ohne vor oder zurück zu wandern.
+Der Aktor baut **nur entlang des Rahmenrands** (Standard: Servo oberhalb des Knopfs). Er
+verdeckt keine Lamellen und passt neben Möbel, die direkt am Gitter stehen.
 
-Für Gitter, deren Lamellen über einen Flügelmutter-Drehknopf um 45° verstellt werden.
-Der Knopf dreht sich nur und wandert dabei nicht vor oder zurück.
+| Variante „direkt“ (Standard) | Variante „getriebe“ |
+|---|---|
+| ![direkt](vorschau_direkt.png) | ![getriebe](vorschau_getriebe.png) |
+| Servo koaxial vor dem Knopf, 45° Servoweg | 18er-Ritzel + Zahnsegment, 1:3, 135° Servoweg |
+| 2 Teile, ca. 53 mm Bauhöhe | 3 Teile, dreifaches Drehmoment |
+| für leichtgängige Knöpfe | für schwergängige Knöpfe / das große Wohnzimmergitter |
 
-| Teil | Material (A1) | Hinweise |
+Variante wählen: `variante = "direkt";` oder `"getriebe"` oben in `lamellen_aktor.scad`.
+
+## Teile und Druck (Bambu A1)
+
+| Teil | Material | Ausrichtung |
 |---|---|---|
-| `mitnehmer` – Glocke über der Flügelmutter + Zahnrad 54 Z. | PETG, bei > 60 °C am Knopf ASA | Glocke auf dem Bett, keine Stützen |
-| `ritzel` – 18 Z., wird ans Servohorn geschraubt | PETG | 100 % Infill |
-| `halter` – Platte mit Servoausschnitt und zwei Füßen | PETG | Platte aufs Bett, **Baumstützen nur für die Füße** |
+| `mitnehmer` – Glocke über dem Knopf (+ Zahnsegment) | PETG, bei > 60 °C am Knopf ASA | wird automatisch richtig gedreht, keine Stützen |
+| `halter` – Platte mit Servoausschnitt, zwei Füße | PETG | Platte aufs Bett, **Baumstützen nur unter den Füßen** |
+| `ritzel` (nur getriebe) | PETG, 100 % Infill | flach |
 
-Übersetzung 1:3: 135° Servoweg ergeben 45° Lamellenweg. Das verdreifacht das Drehmoment
-und die Auflösung.
+```sh
+for p in mitnehmer halter ritzel; do
+  openscad -D 'variante="direkt"' -D "part=\"$p\"" -o "$p.stl" lamellen_aktor.scad
+done
+```
 
-## Anpassen und Exportieren
+Erste Probe: nur den `mitnehmer` drucken und auf den Knopf stecken, um das Spiel (`fit`)
+zu prüfen.
 
-1. Knopf vermessen und oben in `lamellen_aktor.scad` eintragen: `knob_span`, `knob_wing_t`,
-   `knob_hub_d`, `knob_h`.
-2. `feet` so setzen, dass beide Füße auf dem **festen Rahmen** des Gitters stehen, nicht auf
-   den Lamellen. Die Koordinaten beziehen sich auf die Knopfachse. OpenSCAD warnt, wenn ein
-   Fuß das Zahnrad berührt.
-3. Exportieren:
-   ```sh
-   for p in mitnehmer ritzel halter; do
-     openscad -D "part=\"$p\"" -o "$p.stl" lamellen_aktor.scad
-   done
-   ```
+## Maße, die angepasst werden müssen
 
-Erste Probe: nur den `mitnehmer` mit niedriger Füllung drucken und auf den Knopf stecken,
-um das Spiel (`fit`) zu prüfen.
+| Parameter | Bedeutung |
+|---|---|
+| `knob_span`, `knob_wing_t` | größte Breite des Knopfs und Breite quer dazu |
+| `knob_hub_d`, `knob_h` | Durchmesser des runden Fußes, Höhe über dem Rahmen |
+| `engage` | wie tief die Glocke über den Knopf greift (≤ `knob_h`) |
+| `feet` | Fußpositionen relativ zur Knopfachse, beide auf dem Rahmenrand |
+| `foot_size` | Klebefläche; Breite (x) ≤ Breite des Rahmenrands |
+| `servo_dir` | 90 = Servo über dem Knopf, 270 = darunter |
 
-## Befestigung am geklemmten Gitter
+OpenSCAD warnt, wenn ein Fuß mit dem Mitnehmer kollidiert.
 
-Das Gitter ist nur geklemmt, die Füße werden daher auf den Rahmen geklebt (3M VHB,
-hitzefeste Variante) **oder** durch den Rahmen verschraubt (2 × M3 je Fuß). Zum Verschrauben
-das Gitter herausziehen und den Rahmen anbohren. Das Ganze bleibt eine Einheit und lässt sich
-zum Reinigen samt Aktor herausnehmen.
+## Befestigung
+
+Das Gitter ist nur geklemmt, und der Rahmen ist aus Edelstahl. Am einfachsten werden die
+Füße mit **3M VHB** aufgeklebt (vorher mit Isopropanol entfetten, 24 h aushärten lassen).
+Das hält auf Edelstahl sehr gut und lässt sich wieder ablösen. Gitter und Aktor bleiben eine
+Einheit und lassen sich zum Reinigen zusammen herausziehen.
 
 ## Montage
 
-1. Servohorn (einarmig) auf **9 mm** ab Wellenmitte kürzen.
-2. Horn in die Tasche des Ritzels legen und mit zwei kleinen Hornschrauben fixieren.
-3. Servo von vorn durch die Platte stecken und mit den Laschen festschrauben.
-4. Den Servo in Stellung „zu“ fahren (siehe Kalibrierung), Gitter von Hand schließen.
-   Dann das Ritzel mit der Mittelschraube auf die Servowelle schrauben.
-5. Den Mitnehmer auf den Knopf setzen, die Platte aufsetzen (der Zapfen läuft im Lagerloch)
-   und die Füße befestigen.
+**Direkt:**
+1. Das einarmige Horn mit der Mittelschraube auf den Servo schrauben (Stellung siehe
+   Kalibrierung in `firmware/README.md`).
+2. Die Glocke mit der Tasche auf das Horn drücken. Zwei kleine Hornschrauben von innen durch
+   die Glocke in die Hornlöcher drehen.
+3. Den Servo von vorn durch die Platte stecken und an den Laschen festschrauben.
+4. Den Aktor mit der Glocke über den Knopf setzen und die Füße aufkleben.
+
+**Getriebe:**
+1. Horn auf 9 mm ab Wellenmitte kürzen, in die Tasche des Ritzels legen und mit zwei kleinen
+   Schrauben fixieren. Das Ritzel mit der Mittelschraube (von unten durch die Senkung) auf die
+   Welle schrauben.
+2. Servo in die Platte schrauben. Den Mitnehmer auf den Knopf setzen, die Platte aufsetzen
+   (der Zapfen greift in die Bohrung) und die Füße aufkleben.
 
 ## Elektronik je Knoten
 
@@ -66,5 +86,5 @@ zum Reinigen samt Aktor herausnehmen.
   in Tagen leeren.
 - 470 µF Elko direkt am Servo gegen Spannungseinbrüche beim Anlaufen.
 - Laden über den USB-C-Anschluss des XIAO (Ladeschaltung auf dem Board).
-- Platz für Akku und Elektronik: ein eigenes Gehäuse neben dem Halter (folgt, sobald die
-  Gitter vermessen sind).
+- Ein Gehäuse für Akku und Elektronik folgt. Es soll ebenfalls auf dem Rahmenrand sitzen,
+  unterhalb des Aktors.

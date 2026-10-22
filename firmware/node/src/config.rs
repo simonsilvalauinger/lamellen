@@ -13,11 +13,12 @@ pub const ROOM: Room = match Room::from_slug(or(option_env!("LAMELLE_ROOM"), "sc
     None => panic!("LAMELLE_ROOM: unbekannter Raum (siehe Room::slug)"),
 };
 
-/// Pulsbreiten für „zu“ (0 %) und „offen“ (100 %). Mit 1:3-Getriebe
-/// entsprechen 45° Lamellenweg etwa 135° am Servo. Pro Gitter kalibrieren.
+/// Pulsbreiten für „zu“ (0 %) und „offen“ (100 %), pro Gitter kalibrieren.
+/// Standard passt zur Variante „direkt“ (45° am Servo, MG90S ≈ 11 µs/°).
+/// Für die Variante „getriebe“ (135° am Servo) etwa 750 / 2250 µs.
 pub const SERVO: ServoCalibration = ServoCalibration {
-    closed_us: parse_u16(or(option_env!("LAMELLE_CLOSED_US"), "1125")),
-    open_us: parse_u16(or(option_env!("LAMELLE_OPEN_US"), "1875")),
+    closed_us: parse_u16(or(option_env!("LAMELLE_CLOSED_US"), "1250")),
+    open_us: parse_u16(or(option_env!("LAMELLE_OPEN_US"), "1750")),
 };
 
 pub const NODE: NodeConfig = NodeConfig::DEFAULT;

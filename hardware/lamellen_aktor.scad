@@ -1,35 +1,42 @@
-// Lamellen-Aktor für Lüftungsgitter mit Flügelmutter-Drehknopf
+// Lamellen-Aktor für Edelstahl-Lüftungsgitter mit Drehknopf am Rahmenrand
 //
-// Aufbau (Seitenansicht, Gitter links):
+// Koordinaten: Knopfachse im Ursprung, z zeigt aus der Wand heraus,
+// y entlang des Rahmenrands (nach oben), x Richtung Lamellen.
+// Der Aktor baut nur entlang des Rahmenrands (servo_dir), damit er neben
+// Möbeln Platz hat und keine Lamellen verdeckt.
 //
-//   Gitter | Knopf | Mitnehmer+Zahnrad | Halterplatte | Servo (MG90S)
-//          |       |  (54 Z.)  <->  Ritzel (18 Z.) am Servohorn
-//
-// 1:3-Getriebe: 135° Servoweg = 45° Lamellenweg, dreifaches Drehmoment.
-// Die Halterplatte steht auf zwei Füßen, die auf dem Gitterrahmen
-// aufliegen und dort mit hitzefestem Klebeband (z. B. 3M VHB) oder
-// M3-Schrauben befestigt werden.
+// Varianten:
+//   "direkt"   – Servo sitzt koaxial vor dem Knopf, Horn treibt die Glocke
+//                direkt an (45° Servoweg). Kompakt, wenig Teile. Standard.
+//   "getriebe" – Servo versetzt, 18er-Ritzel treibt ein Zahnsegment an der
+//                Glocke (1:3). Dreifaches Drehmoment für schwergängige Knöpfe
+//                oder große Gitter (Wohnzimmer).
 //
 // Export:  openscad -D 'part="mitnehmer"' -o mitnehmer.stl lamellen_aktor.scad
-// Teile:   "assembly", "mitnehmer", "ritzel", "halter", "print" (alle flach)
+// Teile:   "assembly", "mitnehmer", "halter", "ritzel" (nur Getriebe), "print"
 //
 // Alle Maße in mm. Erst den Knopf vermessen, dann die Werte unten anpassen.
 
-part = "assembly";
+part     = "assembly";
+variante = "direkt";   // "direkt" oder "getriebe"
 
-/* [Knopf / Flügelmutter] */
-knob_span   = 30;   // Spannweite über beide Flügel
-knob_wing_t = 4;    // Dicke eines Flügels
-knob_hub_d  = 12;   // Durchmesser der Nabe in der Mitte
-knob_h      = 12;   // Höhe des Knopfs über der Gitterfläche
-engage      = 7;    // so tief übergreift der Mitnehmer den Knopf
+/* [Knopf] */
+knob_span   = 26;   // größte Breite des Knopfs (über die Flügel)
+knob_wing_t = 8;    // Breite quer dazu (Dicke des Flügelteils)
+knob_hub_d  = 12;   // Durchmesser des runden Fußes
+knob_h      = 15;   // Höhe des Knopfs über der Rahmenfläche
+engage      = 8;    // so tief übergreift die Glocke den Knopf
+knob_travel = 45;   // Drehweg zu → auf
 fit         = 0.3;  // Spiel je Seite (PETG auf dem A1: 0,2–0,3)
 
+/* [Aufbau] */
+servo_dir   = 90;   // Richtung, in die der Servo vom Knopf aus baut (90 = nach oben)
+
 /* [Getriebe] */
-gear_m      = 1;    // Modul
-z_pinion    = 18;   // Zähne Ritzel (Servo)
-z_knob      = 54;   // Zähne Knopfzahnrad
-gear_t      = 6;    // Zahnbreite
+gear_m      = 1;
+z_pinion    = 18;
+z_knob      = 54;   // Teilung des Zahnsegments (nur ein Ausschnitt wird gedruckt)
+gear_t      = 6;
 backlash    = 0.15;
 
 /* [Servo MG90S] */
@@ -40,36 +47,50 @@ servo_hole_d     = 2.0;   // Kernloch für die mitgelieferten Schrauben
 servo_shaft_off  = 6.0;   // Wellenmitte ab Gehäuseende
 servo_below_tab  = 10.0;  // Lasche bis Hornauflage (Wellenseite)
 horn_hub_d       = 7.4;   // Nabe des einarmigen Horns
-horn_arm_len     = 9;     // Horn auf diese Länge kürzen (ab Wellenmitte)
 horn_arm_w       = 5.6;
 horn_t           = 1.8;
+horn_arm_len     = variante == "direkt" ? 14 : 9;  // Getriebe: Horn kürzen
 
 /* [Halter] */
 plate_t     = 3;
-axle_d      = 8;        // Lagerzapfen des Knopfzahnrads
-feet        = [[-34, 22], [-34, -22]];  // Fußpositionen relativ zur Knopfachse
-foot_size   = [14, 26];
-foot_screw  = true;     // M3-Durchgangslöcher in den Füßen
-leg_w       = 8;
+axle_d      = 6;        // Führungszapfen am Halter (nur Getriebe)
+feet        = variante == "direkt" ? [[0, -32], [0, 34]] : [[0, -32], [0, 64]];
+foot_size   = [16, 22]; // Klebefläche je Fuß (VHB) – Breite ≤ Rahmenrand
+leg_w       = 9;
 
 $fn = 64;
 
 // ---------------------------------------------------------------- Ableitungen
-r_knob_gear   = gear_m * z_knob / 2;
-r_pinion      = gear_m * z_pinion / 2;
-center_dist   = r_knob_gear + r_pinion;
-gear_z0       = knob_h + 1.5;             // Unterkante Zahnräder
-gear_z1       = gear_z0 + gear_t;         // Oberkante = Hornauflage
-plate_front   = gear_z1 + servo_below_tab; // Laschen liegen hier auf
-plate_z0      = plate_front - plate_t;
-pinion_pos    = [center_dist, 0];
+function dir(a) = [cos(a), sin(a)];
 
-echo(str("Achsabstand ", center_dist, " mm, Übersetzung 1:", z_knob / z_pinion,
-         ", Bauhöhe ab Gitter ca. ", plate_front + 23, " mm"));
-assert(plate_z0 > gear_z1 + 0.8, "servo_below_tab zu klein für die Platte");
+bell_r      = max(knob_span, knob_wing_t) / 2 + fit + 2.4;
+bell_z0     = knob_h - engage;
+roof_t      = 4.5;
+direct      = variante == "direkt";
+
+r_knob_gear = gear_m * z_knob / 2;
+r_pinion    = gear_m * z_pinion / 2;
+center_dist = r_knob_gear + r_pinion;
+pinion_pos  = direct ? [0, 0] : center_dist * dir(servo_dir);
+sector      = 2 * knob_travel + 30;   // deckt beide Drehrichtungen ab
+
+gear_z0     = knob_h + 1.5;
+horn_seat   = direct ? knob_h + fit + roof_t : gear_z0 + gear_t;
+plate_front = horn_seat + servo_below_tab;  // Servolaschen liegen hier auf
+plate_z0    = plate_front - plate_t;
+// Mitte zwischen den Servolöchern, vom Wellenmittelpunkt aus
+servo_center = pinion_pos + (servo_l / 2 - servo_shaft_off) * dir(servo_dir);
+
+echo(str("Variante ", variante, ", Bauhöhe ab Rahmen ca. ", plate_front + 23, " mm",
+         direct ? "" : str(", Achsabstand ", center_dist, " mm, 1:", z_knob / z_pinion)));
+assert(plate_z0 > horn_seat + 0.8, "servo_below_tab zu klein für die Platte");
+// Das Zahnsegment reicht nur in Richtung Servo über die Glocke hinaus.
+function angdiff(a, b) = abs((a - b + 540) % 360 - 180);
+function reach(f) = !direct && angdiff(atan2(f[1], f[0]), servo_dir) <= sector / 2 + 10
+    ? r_knob_gear + gear_m : bell_r;
 for (f = feet)
-    if (norm(f) < r_knob_gear + gear_m + leg_w / 2 + 1)
-        echo("WARNUNG: Fuß", f, "kollidiert mit dem Knopfzahnrad");
+    if (norm(f) < reach(f) + leg_w * 0.71 + 1)
+        echo("WARNUNG: Fuß", f, "kollidiert mit dem Mitnehmer");
 
 // ---------------------------------------------------------------- Zahnrad 2D
 function invd(a) = (tan(a) - a * PI / 180) * 180 / PI;
@@ -96,118 +117,141 @@ module gear2d(m, z, pa = 20, bl = backlash) {
     }
 }
 
-// ---------------------------------------------------------------- Teile
-// Mitnehmer: Glocke über der Flügelmutter + Knopfzahnrad + Lagerzapfen.
-module mitnehmer() {
-    bell_r = knob_span / 2 + fit + 2.4;
-    difference() {
-        union() {
-            translate([0, 0, gear_z0]) linear_extrude(gear_t) gear2d(gear_m, z_knob);
-            // Kegel statt Stufe: druckt ohne Stützen (Glocke unten auf dem Bett)
-            translate([0, 0, knob_h - engage])
-                cylinder(r1 = bell_r, r2 = max(bell_r, r_knob_gear - 1.25 * gear_m - 0.3),
-                         h = gear_z0 - (knob_h - engage) + 0.01);
-            translate([0, 0, gear_z1 - 0.01]) cylinder(d = axle_d, h = plate_front - gear_z1 + 1);
-        }
-        // Aussparung für die Flügelmutter
-        translate([0, 0, knob_h - engage - 1]) {
-            translate([-(knob_span / 2 + fit), -(knob_wing_t / 2 + fit), 0])
-                cube([knob_span + 2 * fit, knob_wing_t + 2 * fit, engage + 1 + fit]);
-            cylinder(d = knob_hub_d + 2 * fit, h = engage + 1 + fit);
-        }
-        // Gewicht sparen
-        for (a = [45:90:359])
-            rotate(a) translate([r_knob_gear * 0.55, 0, gear_z0 - 1]) cylinder(d = r_knob_gear * 0.45, h = gear_t + 2);
+module wedge2d(r, a0, a1) {
+    polygon(concat([[0, 0]], [for (i = [0:24]) r * dir(a0 + (a1 - a0) * i / 24)]));
+}
+
+module horn_pocket2d() {
+    hull() {
+        circle(d = horn_hub_d + 2 * fit);
+        translate([horn_arm_len - horn_arm_w / 2, 0]) circle(d = horn_arm_w + 2 * fit);
     }
 }
 
-// Ritzel: wird mit den Hornschrauben am gekürzten Servohorn verschraubt.
-module ritzel() {
-    translate([pinion_pos[0], pinion_pos[1], 0]) rotate(180 / z_pinion) difference() {
-        translate([0, 0, gear_z0]) linear_extrude(gear_t) gear2d(gear_m, z_pinion);
-        // Taschen für Horn (oben) und Hornnabe
-        translate([0, 0, gear_z1 - horn_t]) linear_extrude(horn_t + 1) hull() {
-            circle(d = horn_hub_d + 2 * fit);
-            translate([horn_arm_len - horn_arm_w / 2, 0]) circle(d = horn_arm_w + 2 * fit);
+module knob_cavity(h) {
+    translate([-(knob_span / 2 + fit), -(knob_wing_t / 2 + fit), 0])
+        cube([knob_span + 2 * fit, knob_wing_t + 2 * fit, h]);
+    cylinder(d = knob_hub_d + 2 * fit, h = h);
+}
+
+// ---------------------------------------------------------------- Teile
+// Mitnehmer „direkt“: Glocke über dem Knopf, oben eine Tasche für das Servohorn.
+// Das Horn wird von innen mit zwei kleinen Schrauben in der Tasche fixiert.
+module mitnehmer_direkt() {
+    top = knob_h + fit + roof_t;
+    difference() {
+        translate([0, 0, bell_z0]) cylinder(r = bell_r, h = top - bell_z0);
+        translate([0, 0, bell_z0 - 1]) knob_cavity(engage + 1 + fit);
+        // Horntasche, Arm zeigt vom Servo weg
+        translate([0, 0, top - horn_t]) rotate(servo_dir + 180) linear_extrude(horn_t + 1) horn_pocket2d();
+        // Kopf der Hornschraube
+        translate([0, 0, top - horn_t - 2]) cylinder(d = 5.5, h = 3);
+        // zwei Schrauben von innen durch die Hornlöcher
+        for (x = [horn_arm_len - 6, horn_arm_len - 2.5])
+            rotate(servo_dir + 180) translate([x, 0, knob_h]) cylinder(d = 1.4, h = roof_t + 2);
+    }
+}
+
+// Mitnehmer „getriebe“: Glocke + Zahnsegment Richtung Servo.
+module mitnehmer_getriebe() {
+    difference() {
+        union() {
+            translate([0, 0, bell_z0]) cylinder(r = bell_r, h = gear_z0 + gear_t - bell_z0);
+            translate([0, 0, gear_z0]) linear_extrude(gear_t) intersection() {
+                gear2d(gear_m, z_knob);
+                wedge2d(r_knob_gear + 2 * gear_m, servo_dir - sector / 2, servo_dir + sector / 2);
+            }
+            // Steg, der das Segment mit der Glocke verbindet
+            translate([0, 0, gear_z0]) linear_extrude(gear_t)
+                wedge2d(r_knob_gear - 1.25 * gear_m + 0.01, servo_dir - sector / 2, servo_dir + sector / 2);
         }
-        // Mittelschraube des Horns, von unten zugänglich
+        translate([0, 0, bell_z0 - 1]) knob_cavity(engage + 1 + fit);
+        // Lagerbohrung für den Zapfen am Halter
+        translate([0, 0, gear_z0 + gear_t - 3]) cylinder(d = axle_d + 0.4, h = 4);
+    }
+}
+
+module mitnehmer() { if (direct) mitnehmer_direkt(); else mitnehmer_getriebe(); }
+
+// Ritzel (nur Getriebe): wird mit den Hornschrauben am gekürzten Horn befestigt.
+module ritzel() {
+    translate(pinion_pos) rotate(servo_dir + 180 + 180 / z_pinion) difference() {
+        translate([0, 0, gear_z0]) linear_extrude(gear_t) gear2d(gear_m, z_pinion);
+        translate([0, 0, gear_z0 + gear_t - horn_t]) linear_extrude(horn_t + 1) horn_pocket2d();
         translate([0, 0, gear_z0 - 1]) cylinder(d = 2.4, h = gear_t + 2);
-        translate([0, 0, gear_z0 - 1]) cylinder(d = 4.8, h = 1 + gear_t - horn_t - 1.2);
-        // zwei kleine Schrauben durch die Hornlöcher
+        translate([0, 0, gear_z0 - 1]) cylinder(d = 4.8, h = gear_t - horn_t - 0.2);
         for (x = [4.5, 7]) translate([x, 0, gear_z0 + 1]) cylinder(d = 1.4, h = gear_t);
     }
 }
 
 module servo_outline(clear = 0) {
-    // Gehäusequerschnitt, Welle im Ursprung, Gehäuse in +x
-    translate([-servo_shaft_off - clear, -servo_w / 2 - clear])
+    // Gehäusequerschnitt, Welle im Ursprung, Gehäuse in servo_dir
+    rotate(servo_dir) translate([-servo_shaft_off - clear, -servo_w / 2 - clear])
         square([servo_l + 2 * clear, servo_w + 2 * clear]);
 }
 
 module halter() {
-    servo_center_x = pinion_pos[0] - servo_shaft_off + servo_l / 2;
     difference() {
         union() {
-            // Platte
             translate([0, 0, plate_z0]) linear_extrude(plate_t) hull() {
-                circle(d = axle_d + 8);
-                translate([servo_center_x, 0]) square([servo_hole_dist + 7, servo_w + 8], center = true);
+                translate(servo_center) rotate(servo_dir) square([servo_hole_dist + 7, servo_w + 8], center = true);
                 for (f = feet) translate(f) square(leg_w, center = true);
+                if (!direct) circle(d = axle_d + 8);
             }
-            // Beine und Füße
             for (f = feet) {
                 translate([f[0] - leg_w / 2, f[1] - leg_w / 2, 0]) cube([leg_w, leg_w, plate_z0 + 0.01]);
                 translate([f[0] - foot_size[0] / 2, f[1] - foot_size[1] / 2, 0]) cube([foot_size[0], foot_size[1], 2.5]);
             }
+            // Führungszapfen in die Lagerbohrung des Mitnehmers
+            if (!direct) translate([0, 0, gear_z0 + gear_t - 2.5]) cylinder(d = axle_d, h = plate_z0 - gear_z0 - gear_t + 2.6);
         }
-        // Lager für den Mitnehmer
-        translate([0, 0, plate_z0 - 1]) cylinder(d = axle_d + 0.4, h = plate_t + 2);
         // Servo steckt von vorn durch die Platte, Laschen liegen auf
         translate([pinion_pos[0], pinion_pos[1], plate_z0 - 1]) linear_extrude(plate_t + 2) servo_outline(0.3);
-        for (dx = [-servo_hole_dist / 2, servo_hole_dist / 2])
-            translate([servo_center_x + dx, 0, plate_z0 - 1]) cylinder(d = servo_hole_d, h = plate_t + 2);
-        if (foot_screw)
-            // je zwei M3-Löcher neben dem Bein
-            for (f = feet, dy = [-1, 1])
-                translate([f[0], f[1] + dy * (foot_size[1] / 2 - 4.5), -1]) cylinder(d = 3.4, h = 5);
+        for (s = [-1, 1])
+            translate(concat(servo_center + s * servo_hole_dist / 2 * dir(servo_dir), [plate_z0 - 1]))
+                cylinder(d = servo_hole_d, h = plate_t + 2);
     }
 }
 
-// Vereinfachter MG90S, nur zur Kontrolle in der Baugruppe
+// ---------------------------------------------------------------- Dummies
 module servo_dummy() {
-    color("royalblue") translate([pinion_pos[0], pinion_pos[1], 0]) {
-        translate([0, 0, gear_z1 + 2.5]) linear_extrude(plate_front - gear_z1 - 2.5 + 22.5) servo_outline();
+    color("royalblue") translate(pinion_pos) {
+        translate([0, 0, horn_seat + 2.5]) linear_extrude(plate_front - horn_seat - 2.5 + 22.5) servo_outline();
         translate([0, 0, plate_front]) linear_extrude(2.5)
-            translate([-servo_shaft_off - (servo_hole_dist - servo_l) / 2 - 2.2, -servo_w / 2]) square([servo_hole_dist + 4.4, servo_w]);
-        translate([0, 0, gear_z1 - 0.1]) cylinder(d = 4.8, h = 3);
+            translate(servo_center - pinion_pos) rotate(servo_dir) square([servo_hole_dist + 4.4, servo_w], center = true);
+        translate([0, 0, horn_seat - 0.1]) cylinder(d = 4.8, h = 3);
     }
 }
 
-module knob_dummy() {
-    color("gray") {
+module frame_dummy() {
+    // Rahmenrand ca. 30 mm breit, Knopf mittig; rechts beginnen die Lamellen
+    color("silver", 0.6) translate([-15, -120, -1.5]) cube([30, 240, 1.5]);
+    color("dimgray", 0.6) translate([15, -120, -6]) cube([200, 240, 1.5]);
+    color("black") {
         cylinder(d = knob_hub_d, h = knob_h);
-        translate([-knob_span / 2, -knob_wing_t / 2, knob_h - engage]) cube([knob_span, knob_wing_t, engage]);
+        translate([-knob_span / 2, -knob_wing_t / 2, bell_z0]) cube([knob_span, knob_wing_t, engage]);
     }
-    color("lightgray", 0.5) translate([-60, -40, -2]) cube([120, 80, 2]);
 }
 
 // ---------------------------------------------------------------- Ausgabe
+module print_mitnehmer() {
+    if (direct) translate([0, 0, -bell_z0]) mitnehmer();          // Öffnung unten, Dach überbrückt
+    else rotate([180, 0, 0]) translate([0, 0, -(gear_z0 + gear_t)]) mitnehmer();  // Zahnsegment auf dem Bett
+}
+module print_halter() { rotate([180, 0, 0]) translate([0, 0, -plate_front]) halter(); }  // Platte auf dem Bett
+module print_ritzel() { translate(concat(-pinion_pos, [-gear_z0])) ritzel(); }
+
 if (part == "assembly") {
-    knob_dummy();
+    frame_dummy();
     color("orange") mitnehmer();
-    color("gold") ritzel();
+    if (!direct) color("gold") ritzel();
     color("seagreen", 0.85) halter();
     servo_dummy();
-} else if (part == "mitnehmer") {
-    // Glocke unten auf dem Bett, Zapfen oben: keine Stützen nötig
-    translate([0, 0, -(knob_h - engage)]) mitnehmer();
-} else if (part == "ritzel") {
-    translate([-pinion_pos[0], -pinion_pos[1], -gear_z0]) ritzel();
-} else if (part == "halter") {
-    // Platte auf das Bett, Beine nach oben; Füße mit Baumstützen drucken
-    rotate([180, 0, 0]) translate([0, 0, -plate_front]) halter();
-} else if (part == "print") {
-    translate([0, 0, -(knob_h - engage)]) mitnehmer();
-    translate([0, 70, 0]) translate([-pinion_pos[0], -pinion_pos[1], -gear_z0]) ritzel();
-    translate([90, 0, 0]) rotate([180, 0, 0]) translate([0, 0, -plate_front]) halter();
+} else if (part == "mitnehmer") print_mitnehmer();
+else if (part == "halter") print_halter();
+else if (part == "ritzel") print_ritzel();
+else if (part == "print") {
+    print_mitnehmer();
+    translate([60, 0, 0]) print_halter();
+    if (!direct) translate([0, 60, 0]) print_ritzel();
 }
