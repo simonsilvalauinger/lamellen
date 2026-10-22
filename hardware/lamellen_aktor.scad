@@ -633,6 +633,7 @@ module lid(z, screw_y = undef) {
         }
         if (screw_y != undef) translate([0, screw_y, z - 2]) {
             cylinder(d = 2.4, h = lid_t + 3);
+            cylinder(d = boss_d + 0.6, h = 2);   // Steg am Schraubdom aussparen
             translate([0, 0, 2 + lid_t - 1.2]) cylinder(d1 = 2.4, d2 = 4.6, h = 1.21);
         }
     }

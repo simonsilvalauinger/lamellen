@@ -17,20 +17,37 @@ Fertige Exporte der Standardvariante „stirn“ liegen in [`export/stirn/`](exp
 |---|---|
 | `lamellen_stirn.3mf` | **Bambu Studio**: alle Druckteile, richtig ausgerichtet, auf einer Platte (195 × 187 mm). Öffnen, Material PETG wählen, für das Gehäuse Baumstützen aktivieren. |
 | `stl/*.stl` | dieselben Teile einzeln, z. B. um nur die Hülse als Passprobe zu drucken |
-| `lamellen_stirn_baugruppe.step` | **Onshape**: alle Teile in Einbaulage als benannte, eingefärbte Volumenkörper, dazu Platzhalter für Servo, Knopf, Akku/Elektronik und Rahmen (`ref_*`) |
+| `lamellen_stirn_baugruppe.step` | **Onshape**: alle Teile in Einbaulage, benannt und eingefärbt, dazu Platzhalter für Servo, Knopf, Akku, Elektronik und Rahmen (`ref_*`) |
 | `step/*.step` | **Onshape**: jedes Teil einzeln in Einbaulage |
 
 In Onshape: *Import* → STEP-Datei wählen → „Import as a single part studio“ für die
-Baugruppe. Die Teile sind echte Volumenkörper, ebene Flächen sind zusammengefasst. So lässt
-sich messen, skizzieren und mit eigenen Features weiterarbeiten. Gekrümmte Flächen
-(Zahnflanken, Bohrungen) bestehen aus vielen kleinen ebenen Facetten.
+Baugruppe.
 
-Die Quelle bleibt `lamellen_aktor.scad`. Nach jeder Änderung die Exporte neu erzeugen:
+### Exaktes CAD-Modell
+
+Die Variante „stirn“ gibt es zusätzlich als exaktes CAD-Modell in
+[`cad/lamellen.py`](cad/lamellen.py) (CadQuery). Daraus stammen die STEP-Dateien:
+
+- Bohrungen, Dome und Rundungen sind echte Zylinderflächen, die Zahnflanken echte
+  Evolventen (Spline-Flächen). In Onshape lassen sich Flächen deshalb sauber auswählen,
+  bemaßen, verschieben („Move face“) und mit eigenen Features ergänzen.
+- Die Maße (Knopf, Rahmen, Servo, Zahnräder, Akku …) stehen gesammelt in der Klasse
+  `Params`. Alle abgeleiteten Maße werden daraus berechnet. Ein geänderter Parameter
+  ergibt nach einem Export neue Dateien.
+- Onshape selbst kennt diese Parameter nicht: Die STEP-Dateien enthalten exakte Geometrie,
+  aber keine Konstruktionshistorie. Wer in Onshape über eine Variable die Knopfgröße ändern
+  will, bräuchte ein eigenes FeatureScript.
+
+`tools/check_cad.py` prüft, dass CadQuery- und OpenSCAD-Modell übereinstimmen (gleiche
+Volumina je Teil). Außerdem testet es im exakten Modell den Zahneingriff (mit Gegenprobe), den
+freien Drehweg der Hülse über 180° und die Passung von Servo, Akku, Elektronik und Deckeln.
+**Parameter immer in beiden Modellen ändern** und danach die Prüfung laufen lassen.
 
 ```sh
 python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
-.venv/bin/python tools/export.py            # Standardvariante „stirn“
-.venv/bin/python tools/export.py kegel      # weitere Varianten nach export/<variante>/
+.venv/bin/python tools/check_cad.py         # beide Modelle vergleichen, Kollisionen prüfen
+.venv/bin/python tools/export.py            # „stirn“ aus CadQuery (exakt)
+.venv/bin/python tools/export.py kegel      # andere Varianten aus OpenSCAD (facettiert)
 ```
 
 ## Varianten

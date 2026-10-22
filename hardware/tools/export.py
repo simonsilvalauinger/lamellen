@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Exportiert den Lamellen-Aktor für Bambu Studio und Onshape.
 
+Die Standardvariante „stirn“ kommt aus dem exakten CadQuery-Modell
+(cad/lamellen.py): echte Zylinder und Evolventenflanken in den STEP-Dateien.
+Alle anderen Varianten werden mit OpenSCAD gerendert und als Netz in
+Volumenkörper umgewandelt (ebene Facetten zusammengefasst).
+
 Erzeugt je Variante in hardware/export/<variante>/:
   lamellen_<variante>.3mf          alle Druckteile, druckfertig ausgerichtet (Bambu Studio)
   stl/<teil>.stl                   dieselben Teile einzeln
@@ -38,6 +43,7 @@ from OCP.TopExp import TopExp_Explorer
 from OCP.TopoDS import TopoDS, TopoDS_Compound
 
 HERE = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(HERE / "cad"))
 SCAD = HERE / "lamellen_aktor.scad"
 OUT = HERE / "export"
 
@@ -57,7 +63,11 @@ COLORS = {
     "mitnehmer": (1.0, 0.55, 0.0),
     "ritzel": (0.95, 0.8, 0.1),
     "gehaeuse": (0.3, 0.6, 0.45),
+    "deckel_turm": (0.45, 0.7, 0.55),
+    "deckel_akku": (0.45, 0.7, 0.55),
+    "deckel_elektronik": (0.45, 0.7, 0.55),
     "ref_servo": (0.25, 0.4, 0.85),
+    "ref_knopf": (0.1, 0.1, 0.1),
 }
 DEFAULT_COLOR = (0.6, 0.6, 0.6)
 
@@ -151,7 +161,37 @@ def arrange(meshes: dict[str, trimesh.Trimesh], gap: float = 8.0) -> trimesh.Sce
     return scene
 
 
+def export_cadquery(variante: str) -> None:
+    """Exakte Geometrie aus cad/lamellen.py (nur Variante „stirn“)."""
+    import cadquery as cq
+    import lamellen as L
+
+    target = OUT / variante
+    (target / "stl").mkdir(parents=True, exist_ok=True)
+    (target / "step").mkdir(parents=True, exist_ok=True)
+    printed, assembly = {}, []
+    for name, (einbau, druck) in L.PARTS.items():
+        stl = target / "stl" / f"{name}.stl"
+        cq.exporters.export(druck(), str(stl), tolerance=0.01, angularTolerance=0.05)
+        printed[name] = trimesh.load_mesh(stl)
+        printed[name].export(stl)   # binäres STL
+        print(f"  {variante}: {name}.stl")
+        solid = einbau().val().wrapped
+        write_step([(name, solid)], target / "step" / f"{name}.step")
+        print(f"  {variante}: {name}.step")
+        assembly.append((name, solid))
+    arrange(printed).export(target / f"lamellen_{variante}.3mf")
+    print(f"  {variante}: lamellen_{variante}.3mf")
+    for name, ref in L.REFERENCES.items():
+        assembly.append((name, ref().val().wrapped))
+    write_step(assembly, target / f"lamellen_{variante}_baugruppe.step")
+    print(f"  {variante}: lamellen_{variante}_baugruppe.step")
+
+
 def export(variante: str) -> None:
+    if variante == "stirn":
+        export_cadquery(variante)
+        return
     target = OUT / variante
     (target / "stl").mkdir(parents=True, exist_ok=True)
     (target / "step").mkdir(parents=True, exist_ok=True)
