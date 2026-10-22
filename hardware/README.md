@@ -41,7 +41,8 @@ zu prüfen.
 | `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
 | `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |
 | `feet` | Fußpositionen relativ zur Knopfachse, beide auf dem Rahmenrand |
-| `foot_size` | Klebefläche; Breite (x) ≤ Breite des Rahmenrands |
+| `frame_w` | Breite des Rahmenrands (gemessen: 25 mm) |
+| `foot_size` | Klebefläche; Breite (x) ≤ `frame_w` (16 mm bei 25 mm Rand) |
 | `servo_dir` | 90 = Servo über dem Knopf, 270 = darunter |
 
 OpenSCAD warnt, wenn ein Fuß mit dem Mitnehmer kollidiert.

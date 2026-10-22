@@ -31,6 +31,7 @@ knob_travel = 180;  // Drehweg des Knopfs zu → auf (Lamellen dabei ca. 75°)
 fit         = 0.3;  // Spiel je Seite (PETG auf dem A1: 0,2–0,3)
 
 /* [Aufbau] */
+frame_w     = 25;   // Breite des Rahmenrands (gemessen), Knopf mittig
 servo_dir   = 90;   // Richtung, in die der Servo vom Knopf aus baut (90 = nach oben)
 
 /* [Getriebe] */
@@ -56,7 +57,7 @@ horn_arm_len     = variante == "direkt" ? 14 : 9;  // Getriebe: Horn kürzen
 plate_t     = 3;
 axle_d      = 6;        // Führungszapfen am Halter (nur Getriebe)
 feet        = variante == "direkt" ? [[0, -32], [0, 34]] : [[0, -32], [0, 64]];
-foot_size   = [16, 22]; // Klebefläche je Fuß (VHB) – Breite ≤ Rahmenrand
+foot_size   = [16, 22]; // Klebefläche je Fuß (VHB), Breite ≤ frame_w
 leg_w       = 9;
 
 $fn = 64;
@@ -87,6 +88,8 @@ servo_center = pinion_pos + (servo_l / 2 - servo_shaft_off) * dir(servo_dir);
 echo(str("Variante ", variante, ", Bauhöhe ab Rahmen ca. ", plate_front + 23, " mm",
          direct ? "" : str(", Achsabstand ", center_dist, " mm, 1:", z_knob / z_pinion)));
 assert(plate_z0 > horn_seat + 0.8, "servo_below_tab zu klein für die Platte");
+assert(foot_size[0] <= frame_w, "Füße breiter als der Rahmenrand");
+assert(servo_w + 8 <= frame_w + 4, "Halterplatte deutlich breiter als der Rahmenrand");
 // Das Zahnsegment reicht nur in Richtung Servo über die Glocke hinaus.
 function angdiff(a, b) = abs((a - b + 540) % 360 - 180);
 function reach(f) = !direct && sector >= 360 ? r_knob_gear + gear_m
@@ -258,9 +261,9 @@ module servo_dummy() {
 }
 
 module frame_dummy() {
-    // Rahmenrand ca. 30 mm breit, Knopf mittig; rechts beginnen die Lamellen
-    color("silver", 0.6) translate([-15, -120, -1.5]) cube([30, 240, 1.5]);
-    color("dimgray", 0.6) translate([15, -120, -6]) cube([200, 240, 1.5]);
+    // Rahmenrand, Knopf mittig; rechts beginnen die Lamellen
+    color("silver", 0.6) translate([-frame_w / 2, -120, -1.5]) cube([frame_w, 240, 1.5]);
+    color("dimgray", 0.6) translate([frame_w / 2, -120, -6]) cube([200, 240, 1.5]);
     color("black") linear_extrude(knob_h) knob2d();
 }
 
