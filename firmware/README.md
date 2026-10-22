@@ -34,8 +34,10 @@ Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeits
 
 ### Kalibrieren
 
-Der Knopf dreht 180° (die Lamellen dabei ca. 75°). Standardwerte: Variante „direkt“
-600/2400 µs, Variante „getriebe“ (270°-Servo) etwa 830/2170 µs.
+Der Knopf dreht 180° (die Lamellen dabei ca. 75°). Standardwerte: Varianten „kegel“ und
+„direkt“ (1:1) 600/2400 µs, Variante „getriebe“ (270°-Servo) etwa 830/2170 µs. Beim
+Kegelradpaar dreht der Knopf entgegengesetzt zum Servo. Schließt das Gitter bei 100 %, die
+beiden Werte tauschen.
 
 Den Wert für „offen“ so wählen, dass der Servo **knapp vor** dem Anschlag des Knopfs stehen
 bleibt. Drückt er gegen den Anschlag, zieht er Blockierstrom, bis er stromlos geschaltet wird.
@@ -43,8 +45,8 @@ Den Anschlag „zu“ erreicht er nie, weil die Firmware mindestens 15 % offen h
 
 1. Den Knoten flashen, bevor der Servo mit dem Gitter verbunden ist. Nach dem Flashen fährt
    er auf `LAMELLE_OPEN_US` (100 %).
-2. Das Gitter von Hand ganz öffnen und das Horn (direkt) bzw. das Ritzel (getriebe) in dieser
-   Stellung aufsetzen. Die Kerbverzahnung der Welle rastet in 18°-Schritten, den Rest gleicht
+2. Das Gitter von Hand ganz öffnen und das Horn (direkt) bzw. das Kegelrad oder Ritzel in
+   dieser Stellung aufsetzen. Die Kerbverzahnung der Welle rastet in 18°-Schritten, den Rest gleicht
    die Kalibrierung aus.
 3. `LAMELLE_CLOSED_US` so lange anpassen, bis „0 %“ genau „zu“ ist. Ist die Drehrichtung
    falsch, die beiden Werte tauschen.
