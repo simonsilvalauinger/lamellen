@@ -21,7 +21,7 @@ import cadquery as cq
 class Params:
     # Knopf (rautenförmig, von vorn gesehen)
     knob_len: float = 35
-    knob_w: float = 10
+    knob_w: float = 10.25   # gemessen 10, +0,25 nach Passprobe
     knob_angle: float = 90
     knob_h: float = 17
     wall: float = 2.4

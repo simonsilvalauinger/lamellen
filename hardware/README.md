@@ -157,7 +157,7 @@ zu prüfen.
 
 | Parameter | Bedeutung |
 |---|---|
-| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 10 mm) |
+| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 10 mm; `knob_w` = 10,25 nach der ersten Passprobe) |
 | `knob_h` | wie weit der Knopf aus dem Rahmen ragt (gemessen: 17 mm) |
 | `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
 | `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |
