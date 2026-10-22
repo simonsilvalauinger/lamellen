@@ -38,10 +38,11 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 
 > **Umgesetzt:** `hardware/lamellen_aktor.scad`, siehe `hardware/README.md`. Die Gitter sind
 > Edelstahlgitter mit einem kleinen Drehknopf auf dem linken Rahmenrand, direkt daneben steht
-> teils ein Möbel. Der Aktor baut deshalb nur entlang des Rahmenrands. Standard ist ein
-> flach liegender 180°-Servo (MG90S), der über zwei Kegelräder (1:1) den Knopf dreht
-> (Variante „kegel“, 39 mm hoch). Alternativen: Servo koaxial vor dem Knopf („direkt“,
-> 55 mm) oder 270°-Servo mit Stirnrädern 1:1,5 („getriebe“). Servo, Akku (18650 oder LiPo) und XIAO sitzen
+> teils ein Möbel. Der Aktor baut deshalb entlang des Rahmenrands. Standard ist ein
+> Zahnkranz an der Hülse, in den das Ritzel eines kopfüber stehenden 180°-Servos (MG90S)
+> greift (Variante „stirn“, 1:1, 35 mm hoch; die Zahnräder ragen 9,5 mm über den Rand).
+> Alternativen: liegender Servo mit Kegelrädern („kegel“, 39 mm), Servo koaxial vor dem
+> Knopf („direkt“, 55 mm) oder 270°-Servo mit Stirnrädern 1:1,5 („getriebe“). Servo, Akku (18650 oder LiPo) und XIAO sitzen
 > in einem gestuften, 25 mm breiten Gehäuse: Servoturm über dem Knopf, Akku- und
 > Elektronikfach flach daneben. Es wird mit VHB auf den Rahmen geklebt.
 

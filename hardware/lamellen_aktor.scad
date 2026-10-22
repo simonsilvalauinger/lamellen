@@ -4,14 +4,18 @@
 // y entlang des Rahmenrands (nach oben), x Richtung Lamellen.
 // Der Aktor baut nur entlang des Rahmenrands, damit er neben Möbeln Platz hat
 // und keine Lamellen verdeckt. Das Gehäuse ist gestuft: nur der Servoturm am
-// Knopf ist hoch, Akku (oben) und Elektronik (unten) liegen flach daneben
-// direkt auf dem Rahmen.
+// Knopf ist hoch, der Akku (oben) liegt flach daneben direkt auf dem Rahmen.
 //
 // Varianten:
+//   "stirn"    – Die Hülse trägt unten einen Zahnkranz (42 Z.) direkt über dem
+//                Rahmen. Der MG90S steht kopfüber unter dem Knopf, sein Ritzel
+//                (42 Z., 1:1) kämmt in derselben Ebene. Robuste Stirnräder, Servo
+//                verschraubt, ca. 35 mm hoch; die Zahnräder ragen auf beiden
+//                Seiten 9,5 mm über den Rahmenrand. Standard.
 //   "kegel"    – MG90S (180°) liegt flach unter dem Knopf, zwei gleiche
-//                Kegelräder (1:1) lenken um 90° auf den Knopf um. Flachste
-//                Bauform (ca. 40 mm). Standard. (Ein Kronenrad geht bei 1:1
-//                nicht: seine Zähne würden innen vollständig unterschnitten.)
+//                Kegelräder (1:1) lenken um 90° auf den Knopf um, ca. 39 mm hoch.
+//                Nur der Servo ragt 4,3 mm zur Lamellenseite über. (Ein Kronenrad
+//                geht bei 1:1 nicht: seine Zähne würden innen unterschnitten.)
 //   "direkt"   – MG90S steht koaxial vor dem Knopf, das Horn treibt die Hülse
 //                direkt an. Wenigste Teile, aber ca. 55 mm hoch.
 //   "getriebe" – 270°-Microservo steht versetzt, 24er-Ritzel auf 36er-Zahnrad
@@ -25,7 +29,7 @@
 
 part      = "assembly";
 show_lids = false;
-variante  = "kegel";   // "kegel", "direkt" oder "getriebe"
+variante  = "stirn";   // "stirn", "kegel", "direkt" oder "getriebe"
 
 /* [Knopf (rautenförmig, von vorn gesehen)] */
 knob_len    = 35;   // Länge der Raute (Spitze bis Spitze)
@@ -51,6 +55,15 @@ bevel_hub_r = 6.5;  // Nabe hinter den Zähnen; kleiner als der Fußkreis, damit
 sleeve_roof = 3;    // Dach der Hülse unter dem Kegelrad
 servo_side  = 1;    // Servogehäuse ragt nach +x (1 = Lamellenseite) oder −x
 
+/* [Zahnkranz an der Hülse (Variante stirn)] */
+spur_m      = 1;
+spur_z      = 42;   // Zahnkranz; Fußkreis muss die Hülse umschließen
+spur_pz     = 42;   // Ritzel am Servo (= spur_z → 1:1 für 180°-Servo)
+spur_t      = 4.5;  // Zahnbreite
+spur_gap    = 2.5;  // Rahmen bis Unterseite Ritzel/Zahnkranz (Platz für Hornschraube)
+servo_tab_from_top = 4.6;  // Servo-Oberseite bis Unterseite der Laschen – nachmessen
+shelf_t     = 1.6;  // Ablage für Platine und XIAO über der Hülse
+
 /* [Stirnrad (Variante getriebe)] */
 gear_m      = 1;
 z_pinion    = 24;
@@ -73,7 +86,7 @@ servo_boss_d     = 11.8;  // Wellendom auf der Oberseite
 horn_hub_d       = 7.4;   // Nabe des einarmigen Horns
 horn_arm_w       = 5.6;
 horn_t           = 1.8;
-horn_arm_len     = variante == "direkt" ? 14 : variante == "kegel" ? 5 : 6;  // sonst Horn kürzen
+horn_arm_len     = variante == "direkt" || variante == "stirn" ? 14 : variante == "kegel" ? 5 : 6;  // sonst Horn kürzen
 
 /* [Gehäuse] */
 plate_t     = 3;        // Zwischenboden (stehender Servo)
@@ -101,12 +114,14 @@ function dir(a) = [cos(a), sin(a)];
 direct      = variante == "direkt";
 krone       = variante == "kegel";   // liegender Servo
 geared      = variante == "getriebe";
-assert(direct || krone || geared, "variante muss \"kegel\", \"direkt\" oder \"getriebe\" sein");
+stirn       = variante == "stirn";
+assert(direct || krone || geared || stirn, "variante muss \"kegel\", \"stirn\", \"direkt\" oder \"getriebe\" sein");
 
 // Die Hülse ist auf den Drehkreis des Knopfs + 1,2 mm begrenzt: beim Drehen
 // überstreicht sie kaum mehr Fläche als der Knopf selbst.
 bell_r      = knob_len / 2 + fit + 1.2;
-bell_z0     = knob_h - engage;
+// Bei „stirn“ reicht die Hülse bis zum Zahnkranz hinunter
+bell_z0     = variante == "stirn" ? spur_gap : knob_h - engage;
 roof_t      = 4.5;
 
 // --- stehender Servo (direkt, getriebe)
@@ -143,6 +158,29 @@ assert(!krone || bevel_hub_r < bevel_m * (bevel_z / 2 - 1.25), "Kegelradnabe gr�
 assert(!krone || horn_arm_len + fit < bevel_hub_r - 0.8, "Horn ragt aus der Kegelradnabe");
 assert(!krone || bevel_b <= c_R * sqrt(2) / 3 + 0.01, "bevel_b zu groß für die Kegellänge");
 
+// --- Zahnkranz an der Hülse, Servo kopfüber (stirn)
+s_z0        = spur_gap;                         // Ebene von Ritzel und Zahnkranz
+s_z1        = s_z0 + spur_t;
+s_rk        = spur_m * spur_z / 2;
+s_rp        = spur_m * spur_pz / 2;
+s_pin_y     = -(s_rk + s_rp);                   // Servowelle unter dem Knopf
+s_top_face  = s_z0 + servo_shaft_h;             // Servo-Oberseite (zeigt zum Rahmen)
+s_tab_z     = s_top_face + servo_tab_from_top;  // Laschen liegen auf dem Boden auf
+s_floor_z0  = s_tab_z - plate_t;
+s_servo_top = s_top_face + servo_body_h;        // Servoboden = höchster Punkt
+// Servogehäuse liegt zwischen Welle und Knopf
+s_body_y0   = s_pin_y - servo_shaft_off;
+s_body_y1   = s_body_y0 + servo_l;
+s_center_y  = (s_body_y0 + s_body_y1) / 2;
+s_tab_y1    = s_center_y + tab_half - 1.1;
+s_cap_top   = knob_h + fit + 2;                 // Hülsendach
+s_shelf_z0  = s_cap_top + 0.5;
+s_shelf_y0  = -bell_r - 0.5;
+assert(!stirn || spur_m * (spur_z / 2 - 1.25) > bell_r + 0.3, "Zahnkranz zu klein für die Hülse");
+assert(!stirn || s_tab_y1 < -bell_r - 0.5, "Servolaschen ragen in den Drehbereich der Hülse");
+assert(!stirn || s_floor_z0 > s_z1 + 0.5, "Servoboden kollidiert mit dem Ritzel");
+assert(!stirn || spur_m * (spur_pz / 2 - 1.25) > horn_arm_len + 1, "Horn größer als das Ritzel");
+
 // --- Turm und Drehbereich (y-Achse)
 // Unter dem Zwischenboden bzw. Dach dreht der Mitnehmer; dort sind die
 // Seitenwände offen.
@@ -153,12 +191,15 @@ win_lo      = krone ? -mit_reach - 1.5 : min(-mit_reach - 1.5, servo_y0 - 1);
 win_hi      = krone ? mit_reach + 1.5
             : max(direct ? mit_reach + 1.5 : pinion_pos[1] + r_pinion + gear_m + 1.5, servo_y1 + 1);
 win_z       = krone ? c_root + 0.7 : plate_z0;  // Höhe des seitlich offenen Bereichs
-z_lid       = krone ? max(c_zp + servo_w / 2, c_zp + c_R + bevel_m) + 0.6
+z_lid       = stirn ? max(s_servo_top, s_shelf_z0 + shelf_t + elec_h) + 0.6
+            : krone ? max(c_zp + servo_w / 2, c_zp + c_R + bevel_m) + 0.6
             : plate_front + servo_above_tab + 1;
 inner_w     = frame_w - 2 * case_wall;
-tower_in_top = krone ? win_hi + case_wall + chamber
+tower_in_top = stirn ? max(s_rk + spur_m + 1.5, s_shelf_y0 + board_len + 1 + xiao_len + 1)
+             : krone ? win_hi + case_wall + chamber
              : max(servo_center[1] + tab_half + 1, win_hi + case_wall + chamber);
-tower_in_bot = krone ? min(c_y_end - 4, win_lo - case_wall - chamber)
+tower_in_bot = stirn ? s_pin_y - s_rp - spur_m - 1.5
+             : krone ? min(c_y_end - 4, win_lo - case_wall - chamber)
              : min(servo_center[1] - tab_half - 1, win_lo - case_wall - chamber);
 tower_top   = tower_in_top + case_wall;
 tower_bot   = tower_in_bot - case_wall;
@@ -175,25 +216,29 @@ akku_y1     = akku_y0 + akku_dim[0];
 boss_top_y  = akku_y1 + 1 + boss_d / 2;
 y_top       = boss_top_y + boss_d / 2 + 0.5 + case_wall;
 z_akku_lid  = base_t + rib_h + akku_dim[2] + 1;
-// unteres Fach: Platine und XIAO
-board_y1    = tower_bot - 1;
+// unteres Fach: Platine und XIAO (bei „stirn“ auf der Ablage über der Hülse)
+foot_len    = 10;                               // Klebefuß am unteren Turmende (stirn)
+board_y1    = stirn ? s_shelf_y0 + board_len : tower_bot - 1;
 board_y0    = board_y1 - board_len;
-xiao_y1     = board_y0 - 1;
+xiao_y1     = stirn ? board_y1 + 1 + xiao_len : board_y0 - 1;
 xiao_y0     = xiao_y1 - xiao_len;
 boss_bot_y  = xiao_y0 - 1 - boss_d / 2;
-y_bot       = boss_bot_y - boss_d / 2 - 0.5 - case_wall;
+y_bot       = stirn ? tower_bot - foot_len : boss_bot_y - boss_d / 2 - 0.5 - case_wall;
 z_elec_lid  = base_t + elec_h;
+z_elec      = stirn ? s_shelf_z0 + shelf_t : base_t;  // Auflage von Platine und XIAO
 
 echo(str("Variante ", variante, ": Gehäuse ", y_top - y_bot, " mm lang, ", y_top,
          " mm über und ", -y_bot, " mm unter der Knopfachse. Höhe ab Rahmen: Servoturm ",
          z_lid + lid_t, " mm (", tower_top - tower_bot, " mm lang), Akkufach ",
-         z_akku_lid + lid_t, " mm, Elektronikfach ", z_elec_lid + lid_t, " mm",
+         z_akku_lid + lid_t, " mm", stirn ? ". Platine und XIAO im Turm über der Hülse"
+         : str(", Elektronikfach ", z_elec_lid + lid_t, " mm"),
+         stirn ? str(". Zahnräder ragen ", s_rk + spur_m - frame_w / 2, " mm über den Rahmenrand (beide Seiten)") : "",
          needs_ext ? str(". Servo ragt ", (servo_side > 0 ? c_x1 : -c_x0) - frame_w / 2,
                          " mm über den Rahmenrand (", servo_side > 0 ? "Lamellenseite" : "Möbelseite", ")") : ""));
 assert(akku_dim[1] <= inner_w, "Akku zu breit für den Rahmenrand");
 assert(xiao_w <= inner_w, "XIAO zu breit für den Rahmenrand");
 assert(krone || servo_w + 0.6 <= inner_w, "Servo zu breit für den Rahmenrand");
-assert(krone || plate_z0 > horn_seat + 0.8, "servo_below_tab zu klein für die Platte");
+assert(krone || stirn || plate_z0 > horn_seat + 0.8, "servo_below_tab zu klein für die Platte");
 assert(-y_bot <= space_below, str("Gehäuse ragt ", -y_bot - space_below, " mm unten über den Rahmen"));
 assert(y_top <= space_above, str("Gehäuse ragt ", y_top - space_above, " mm oben über den Rahmen – kleineren Akku wählen"));
 
@@ -332,8 +377,21 @@ module mitnehmer_getriebe() {
     }
 }
 
+// „stirn“: Hülse mit Zahnkranz unten; zwischen den Zähnen bei −y greift das Ritzel.
+module mitnehmer_stirn() {
+    difference() {
+        union() {
+            sleeve(s_cap_top) sleeve2d();
+            // Lücke bei −90° (zum Ritzel hin)
+            translate([0, 0, s_z0]) rotate(-90 + 180 / spur_z) linear_extrude(spur_t) gear2d(spur_m, spur_z);
+        }
+        translate([0, 0, bell_z0 - 1]) knob_cavity(knob_h - bell_z0 + 1 + fit);
+    }
+}
+
 module mitnehmer() {
-    if (direct) mitnehmer_direkt();
+    if (stirn) mitnehmer_stirn();
+    else if (direct) mitnehmer_direkt();
     else if (krone) mitnehmer_krone();
     else mitnehmer_getriebe();
 }
@@ -366,8 +424,22 @@ module kegelrad_servo() {
     }
 }
 
+// Ritzel für den kopfüber stehenden Servo: Horn liegt in der Tasche auf der
+// Rahmenseite, die Bohrung nimmt Hornnabe und Wellendom auf.
+module ritzel_stirn() {
+    difference() {
+        linear_extrude(spur_t) gear2d(spur_m, spur_pz);
+        translate([0, 0, -1]) linear_extrude(horn_t + 1) horn_pocket2d();
+        translate([0, 0, -1]) cylinder(d = servo_boss_d + 0.8, h = spur_t + 2);
+        for (x = [horn_arm_len - 5, horn_arm_len - 2]) translate([x, 0, -1]) cylinder(d = 1.4, h = spur_t);
+    }
+}
+
 module ritzel() {
-    if (krone)
+    if (stirn)
+        // ein Zahn zeigt zum Knopf (+y); der Zahnkranz hat dort eine Lücke
+        translate([0, s_pin_y, s_z0]) rotate(90) ritzel_stirn();
+    else if (krone)
         // Achse entlang y; ein Zahn zeigt nach −z in die Lücke des Knopf-Kegelrads
         translate([0, c_y_back, c_zp]) rotate([-90, 0, 0]) kegelrad_servo();
     else if (geared)
@@ -429,7 +501,54 @@ module tower_walls() {
     } else shell(tower_bot, tower_top, z_lid);
 }
 
-module gehaeuse() {
+module gehaeuse() { if (stirn) gehaeuse_stirn(); else gehaeuse_turm(); }
+
+// „stirn“: Turm mit Servoboden (unten) und Ablage über der Hülse (oben), unten
+// seitlich offen für die Zahnräder. Geklebt wird mit dem Akkufach-Boden und dem
+// Fuß am unteren Ende.
+module gehaeuse_stirn() {
+    win_k = s_rk + spur_m + 1;       // Zahnkranz
+    difference() {
+        union() {
+            shell(tower_bot, tower_top, z_lid);
+            shell(tower_top - case_wall, y_top, z_akku_lid);
+            linear_extrude(base_t) {
+                span2d(tower_top - case_wall, y_top, case_wall / 2);
+                span2d(y_bot, tower_bot + case_wall, 0);
+            }
+            // Stützrippen zwischen Fuß und Turmwand
+            for (x = [-frame_w / 2, frame_w / 2 - case_wall])
+                hull() {
+                    translate([x, tower_bot, 0]) cube([case_wall, case_wall, s_floor_z0]);
+                    translate([x, y_bot, 0]) cube([case_wall, 0.01, base_t]);
+                }
+            // Servoboden
+            translate([0, 0, s_floor_z0]) linear_extrude(plate_t) span2d(tower_bot, s_shelf_y0, case_wall / 2);
+            // Ablage für Platine und XIAO über der Hülse
+            translate([0, 0, s_shelf_z0]) linear_extrude(shelf_t) span2d(s_shelf_y0 - 1, tower_top, case_wall / 2);
+            // Rippen unter dem Akku, Schraubdom des Akkudeckels
+            for (y = [akku_y0 + 5 : 15 : akku_y1 - 3])
+                translate([-inner_w / 2, y, base_t - 0.01]) cube([inner_w, 2, rib_h + 0.01]);
+            translate([0, boss_top_y, base_t - 0.01]) cylinder(d = boss_d, h = z_akku_lid - base_t + 0.01);
+        }
+        // Seitenwände unten offen: Zahnkranz und Hülse …
+        for (sgn = [-1, 1]) translate([sgn > 0 ? inner_w / 2 - 0.01 : -3 * frame_w, -win_k, -1])
+            cube([3 * frame_w - inner_w / 2 + 0.01, 2 * win_k, s_shelf_z0 + 1]);
+        // … und Ritzel (bis knapp über die Zahnräder)
+        for (sgn = [-1, 1]) translate([sgn > 0 ? inner_w / 2 - 0.01 : -3 * frame_w, s_pin_y - s_rp - spur_m - 1, -1])
+            cube([3 * frame_w - inner_w / 2 + 0.01, 2 * (s_rp + spur_m + 1), s_z1 + 1.7]);
+        // Servo steckt kopfüber durch den Boden, Laschen liegen oben auf
+        translate([-servo_w / 2 - 0.3, s_body_y0 - 0.3, s_floor_z0 - 1]) cube([servo_w + 0.6, servo_l + 0.6, plate_t + 2]);
+        for (sgn = [-1, 1]) translate([0, s_center_y + sgn * servo_hole_dist / 2, s_floor_z0 - 1])
+            cylinder(d = servo_hole_d, h = plate_t + 2);
+        // Kabel vom Akkufach auf die Ablage
+        translate([-5, tower_top - case_wall - 1, s_shelf_z0 + shelf_t]) cube([10, case_wall + 2, z_akku_lid - s_shelf_z0 - shelf_t - 0.5]);
+        // Schraubloch des Akkudeckels
+        translate([0, boss_top_y, z_akku_lid - 6]) cylinder(d = 1.8, h = 7);
+    }
+}
+
+module gehaeuse_turm() {
     difference() {
         union() {
             tower_walls();
@@ -529,12 +648,17 @@ module deckel_turm() {
         translate([c_x0 + 1, y - 1, c_zp + servo_w / 2 + 0.3]) cube([servo_l - 2, 2, z_lid - c_zp - servo_w / 2 - 0.3 + 0.01]);
 }
 module deckel_akku() { lid(z_akku_lid, boss_top_y) span2d(tower_top, y_top); }
-module deckel_elektronik() { lid(z_elec_lid, boss_bot_y) span2d(y_bot, tower_bot); }
+module deckel_elektronik() { if (!stirn) lid(z_elec_lid, boss_bot_y) span2d(y_bot, tower_bot); }
 
 // ---------------------------------------------------------------- Dummies
 module servo_dummy() {
     color("royalblue")
-    if (krone) {
+    if (stirn) {
+        translate([-servo_w / 2, s_body_y0, s_top_face]) cube([servo_w, servo_l, servo_body_h]);
+        translate([-servo_w / 2, s_center_y - servo_hole_dist / 2 - 2.2, s_tab_z]) cube([servo_w, servo_hole_dist + 4.4, 2.5]);
+        translate([0, s_pin_y, s_top_face - 4]) cylinder(d = servo_boss_d, h = 4.01);
+        translate([0, s_pin_y, s_z0]) cylinder(d = 4.8, h = s_top_face - s_z0);
+    } else if (krone) {
         translate([c_x0, c_y_end, c_zp - servo_w / 2]) cube([servo_l, servo_body_h, servo_w]);
         translate([0, c_y_face - 0.01, c_zp]) rotate([-90, 0, 0]) {
             cylinder(d = servo_boss_d, h = 4);
@@ -553,10 +677,10 @@ module electronics_dummy() {
     color("dimgray")
         if (akku == "lipo") translate([-akku_dim[1] / 2, akku_y0, z_akku]) cube([akku_dim[1], akku_dim[0], akku_dim[2]]);
         else translate([0, akku_y0, z_akku + akku_dim[2] / 2]) rotate([-90, 0, 0]) cylinder(d = akku_dim[1], h = akku_dim[0]);
-    color("tan") translate([-inner_w / 2 + 0.5, board_y0, base_t + 0.5]) cube([inner_w - 1, board_len, 1.6]);
+    color("tan") translate([-inner_w / 2 + 0.5, board_y0, z_elec + 0.5]) cube([inner_w - 1, board_len, 1.6]);
     // XIAO auf Schaumklebeband; Antenne zur Stirnwand, USB-C zur Platine
-    color("darkgreen") translate([-xiao_w / 2, xiao_y0, base_t + 1]) cube([xiao_w, xiao_len, 1.6]);
-    color("silver") translate([-4.5, xiao_y1 - 7, base_t + 2.6]) cube([9, 7.5, 3.2]);
+    color("darkgreen") translate([-xiao_w / 2, xiao_y0, z_elec + 1]) cube([xiao_w, xiao_len, 1.6]);
+    color("silver") translate([-4.5, stirn ? xiao_y0 - 0.5 : xiao_y1 - 7, z_elec + 2.6]) cube([9, 7.5, 3.2]);
 }
 
 module frame_dummy() {
@@ -581,7 +705,8 @@ module print_deckel() {
     }
 }
 module print_ritzel() {
-    if (krone) translate([0, 0, c_hub_len]) kegelrad_servo();   // Horntasche auf dem Bett
+    if (stirn) translate([0, 0, spur_t]) mirror([0, 0, 1]) ritzel_stirn();   // Horntasche oben
+    else if (krone) translate([0, 0, c_hub_len]) kegelrad_servo();   // Horntasche auf dem Bett
     else if (geared) ritzel_flach(gear_m, z_pinion, gear_t);
 }
 

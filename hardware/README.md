@@ -7,21 +7,39 @@ die Lamellen dabei um ca. 75°. Im geschlossenen Zustand überlappen sich die La
 Servo, Akku und Mikrocontroller sitzen in **einem** Gehäuse auf dem 25 mm breiten
 Rahmenrand. Nur der Servoturm am Knopf ist hoch, Akku und Elektronik liegen flach daneben.
 
-![Variante kegel](vorschau_kegel.png)
+![Variante stirn](vorschau_stirn.png)
 
 ## Varianten
 
-| | **„kegel“ (Standard)** | „direkt“ | „getriebe“ |
-|---|---|---|---|
-| Antrieb | MG90S (180°) liegt flach unter dem Knopf, zwei gleiche Kegelräder 1:1 | MG90S (180°) steht koaxial vor dem Knopf | 270°-Microservo steht versetzt, Stirnräder 1:1,5 |
-| Höhe Servoturm | **39 mm** | 55 mm | 58 mm |
-| Drehmoment am Knopf | wie Servo | wie Servo | 1,5-fach |
-| Teile | Hülse, Kegelrad, Gehäuse, Deckel | Hülse, Gehäuse, Deckel | Hülse, Ritzel, Gehäuse, Deckel |
-| Akku | 18650 oder LiPo | 18650 oder LiPo | nur LiPo (Platz) |
-| Bild | ![kegel](vorschau_kegel.png) | ![direkt](vorschau_direkt.png) | ![getriebe](vorschau_getriebe.png) |
+| | **„stirn“ (Standard)** | „kegel“ | „direkt“ | „getriebe“ |
+|---|---|---|---|---|
+| Antrieb | Zahnkranz an der Hülse, MG90S (180°) steht kopfüber unter dem Knopf, Stirnräder 1:1 | MG90S liegt flach, zwei Kegelräder 1:1 | MG90S steht koaxial vor dem Knopf | 270°-Servo versetzt, Stirnräder 1:1,5 |
+| Höhe Servoturm | **35 mm** | 39 mm | 55 mm | 58 mm |
+| Gehäuselänge | **187 mm** | 215 mm | 201 mm | 208 mm |
+| Überstand seitlich | Zahnräder 9,5 mm auf **beiden** Seiten (nur 2,5–7 mm über dem Rahmen) | Servo 4,3 mm zur Lamellenseite | – | – |
+| Zahnräder | robuste Stirnräder | kleine Kegelräder, druckkritisch | keine | Stirnräder |
+| Servo befestigt mit | Laschen (verschraubt) | Bett und Niederhalter | Laschen | Laschen |
+| Akku | 18650 oder LiPo | 18650 oder LiPo | 18650 oder LiPo | nur LiPo |
+| Bild | ![stirn](vorschau_stirn.png) | ![kegel](vorschau_kegel.png) | ![direkt](vorschau_direkt.png) | ![getriebe](vorschau_getriebe.png) |
 
-Variante wählen: `variante = "kegel";` (oder `"direkt"`, `"getriebe"`) oben in
+Variante wählen: `variante = "stirn";` (oder `"kegel"`, `"direkt"`, `"getriebe"`) oben in
 `lamellen_aktor.scad`.
+
+### Hinweise zur Variante „stirn“
+
+- Der Zahnkranz umschließt die Hülse direkt über dem Rahmen. Deshalb hat er 44 mm
+  Außendurchmesser und ragt auf **beiden** Seiten 9,5 mm über den Rahmenrand, ebenso das
+  gleich große Ritzel darunter. **Prüfen, ob zum Möbel hin 10 mm frei sind.** Die
+  Knopfspitzen brauchen schon heute 5 mm.
+- Der Servo steht kopfüber: Welle und Ritzel zeigen zum Rahmen, die Laschen liegen auf einem
+  Boden und werden verschraubt. Das volle einarmige Horn liegt in der Tasche des Ritzels,
+  ungekürzt.
+- Platine und XIAO liegen auf einer Ablage über der Hülse. Ein eigenes Elektronikfach gibt es
+  nicht, deshalb ist das Gehäuse kürzer.
+- Nachmessen: `servo_shaft_h` (Servo-Oberseite bis Hornauflage) und `servo_tab_from_top`
+  (Oberseite bis Unterseite der Laschen).
+- Funk: Der XIAO liegt nahe am 18650-Akku. Ist die Reichweite zu knapp, an den U.FL-Anschluss
+  des XIAO eine kleine externe Antenne stecken und im Deckel verlegen.
 
 ### Warum Kegelräder und kein Kronenrad
 
@@ -50,7 +68,8 @@ bricht mit einer Meldung ab, wenn das Gehäuse über den Rahmen hinausragen wür
 
 | Variante, Akku | Gehäuselänge | über / unter der Knopfmitte | Höhe Turm / Akkufach / Elektronikfach |
 |---|---|---|---|
-| **kegel, 18650** | 215 mm | 112 / 103 mm | 39 / 25 / 15 mm |
+| **stirn, 18650** | 187 mm | 109,5 / 77,5 mm | 35 / 25 / – mm |
+| kegel, 18650 | 215 mm | 112 / 103 mm | 39 / 25 / 15 mm |
 | direkt, 18650 | 201 mm | 112 / 89 mm | 55 / 25 / 15 mm |
 | getriebe, LiPo | 208 mm | 119 / 89 mm | 58 / 17 / 15 mm |
 
@@ -79,9 +98,9 @@ bricht mit einer Meldung ab, wenn das Gehäuse über den Rahmen hinausragen wür
 
 | Teil | Material | Ausrichtung |
 |---|---|---|
-| `mitnehmer` – Rautenhülse mit Kegelrad | PETG | Öffnung nach unten, keine Stützen |
-| `ritzel` – Kegelrad für die Servowelle | PETG, 100 % Infill, 0,12 mm Schichten | Horntasche auf dem Bett |
-| `gehaeuse` – Turm und beide Fächer in einem Stück | PETG | Rahmenseite aufs Bett, **Baumstützen** unter dem Servobett und dem Dach über dem Knopf |
+| `mitnehmer` – Rautenhülse mit Zahnkranz bzw. Kegelrad | PETG | Zahnkranz bzw. Öffnung nach unten, keine Stützen |
+| `ritzel` – Ritzel bzw. Kegelrad für die Servowelle | PETG, 100 % Infill | „stirn“: Horntasche oben; „kegel“: Horntasche auf dem Bett, 0,12 mm Schichten |
+| `gehaeuse` – Turm und Fächer in einem Stück | PETG | Rahmenseite aufs Bett, **Baumstützen** unter Servoboden, Ablage und den unten offenen Turmwänden |
 | `deckel` – Turmdeckel (gesteckt) und zwei Fachdeckel (je 1 × M2) | PETG | flach, alle drei in einer Datei |
 
 ```sh
@@ -116,7 +135,17 @@ herausziehen.
 
 ## Montage
 
-**Kegel (Standard):**
+**Stirn (Standard):**
+1. Das einarmige Horn in die Tasche des Ritzels legen. Mit der Hornschraube von der
+   Rahmenseite aus auf die Servowelle schrauben (Stellung siehe Kalibrierung in
+   `firmware/README.md`). Zusätzlich zwei kleine Hornschrauben von der Rahmenseite durch die
+   Hornlöcher ins Ritzel drehen.
+2. Den Servo kopfüber von oben in den Servoboden stecken und an den Laschen festschrauben.
+3. Platine und XIAO auf die Ablage, den Akku ins Akkufach kleben und verdrahten.
+4. Die Hülse auf den Knopf stecken, das Gehäuse darübersetzen (Ritzel und Zahnkranz müssen
+   ineinandergreifen) und aufkleben. Dann die Deckel aufsetzen.
+
+**Kegel:**
 1. Ein einarmiges Horn auf **5 mm** ab Wellenmitte kürzen und in die Tasche des Kegelrads
    legen. Mit der Hornschraube von der Zahnseite aus auf die Servowelle schrauben (Stellung
    siehe Kalibrierung in `firmware/README.md`).

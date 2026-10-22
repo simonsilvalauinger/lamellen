@@ -34,10 +34,10 @@ Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeits
 
 ### Kalibrieren
 
-Der Knopf dreht 180° (die Lamellen dabei ca. 75°). Standardwerte: Varianten „kegel“ und
-„direkt“ (1:1) 600/2400 µs, Variante „getriebe“ (270°-Servo) etwa 830/2170 µs. Beim
-Kegelradpaar dreht der Knopf entgegengesetzt zum Servo. Schließt das Gitter bei 100 %, die
-beiden Werte tauschen.
+Der Knopf dreht 180° (die Lamellen dabei ca. 75°). Standardwerte: Varianten „stirn“,
+„kegel“ und „direkt“ (1:1) 600/2400 µs, Variante „getriebe“ (270°-Servo) etwa 830/2170 µs.
+Bei den Zahnradvarianten dreht der Knopf entgegengesetzt zum Servo. Schließt das Gitter bei
+100 %, die beiden Werte tauschen.
 
 Den Wert für „offen“ so wählen, dass der Servo **knapp vor** dem Anschlag des Knopfs stehen
 bleibt. Drückt er gegen den Anschlag, zieht er Blockierstrom, bis er stromlos geschaltet wird.
