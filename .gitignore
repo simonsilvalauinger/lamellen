@@ -3,3 +3,4 @@ target/
 *.stl
 !hardware/export/**/*.stl
 .venv/
+__pycache__/
