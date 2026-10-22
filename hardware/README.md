@@ -23,6 +23,17 @@ Fertige Exporte der Standardvariante „stirn“ liegen in [`export/stirn/`](exp
 In Onshape: *Import* → STEP-Datei wählen → „Import as a single part studio“ für die
 Baugruppe.
 
+### Kalibrierserie für die Hülse
+
+[`export/kalibrierung/huelse_passprobe.3mf`](export/kalibrierung/) enthält fünf kurze,
+offene Hülsenringe (8 mm hoch, ohne Zahnkranz) mit `knob_w` = 10,00 / 10,25 / 10,50 / 10,75 /
+11,00 mm. Der Wert ist in die Lasche eingraviert. Druckzeit nur wenige Minuten.
+
+Alle Ringe nacheinander auf den Knopf stecken. Der passende Ring sitzt ohne Kraft, wackelt aber
+kaum. Seinen Wert als `knob_w` in `lamellen_aktor.scad` und `cad/lamellen.py` eintragen und neu
+exportieren. Länge, Spiel und Wandstärke entsprechen genau der echten Hülse. Andere
+Breiten: `WIDTHS` in `cad/kalibrierung.py` ändern und `python3 cad/kalibrierung.py` ausführen.
+
 ### Exaktes CAD-Modell
 
 Die Variante „stirn“ gibt es zusätzlich als exaktes CAD-Modell in
