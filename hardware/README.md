@@ -15,16 +15,49 @@ verdeckt keine Lamellen und passt neben Möbel, die direkt am Gitter stehen.
 
 Variante wählen: `variante = "direkt";` oder `"getriebe"` oben in `lamellen_aktor.scad`.
 
+## Ein Gehäuse für alles
+
+Servo, Akku und Mikrocontroller sitzen in **einem** Gehäuse auf dem Rahmenrand. Es ist
+25 mm breit wie der Rand und steht etwa 55 mm aus der Wand.
+
+```
+  oben   ┌─────────┐  ← Schraubdom (Deckel)
+         │  Servo  │
+  Knopf ─┼─────────┼─ Zwischenboden; darunter dreht die Hülse (seitlich offen)
+         │  LiPo   │  ← Lochrasterplatine (MOSFETs, Teiler) liegt oben auf dem Akku
+         │         │
+         ├ ─ ─ ─ ─ ┤  ← Schraubdom
+         │  XIAO   │  Antenne zur Stirnwand, weg von Akku und Servo
+  unten  └─────────┘
+```
+
+| Akku (`akku = …`) | Gehäuselänge | über / unter der Knopfachse | Laufzeit (Schätzung) |
+|---|---|---|---|
+| `"lipo"` – LiPo 102050, ca. 1000 mAh, 50 × 20 × 10 mm (Standard) | 125 mm | 31 / 94 mm | ca. eine Heizperiode |
+| `"18650"` – Rundzelle mit Lötfahnen und Schutzschaltung, ca. 3000 mAh | 169 mm | 31 / 138 mm | mehrere Jahre |
+
+Bei der Variante „getriebe“ sitzt der Servo höher (61 mm über / 64 mm unter der Achse).
+
+- **Wärme:** Der Akku liegt auf dem Zwischenboden etwa 30 mm über dem Rahmen. Durch den
+  Luftspalt mit Lüftungsschlitzen darunter heizt der warme Rahmen den Akku kaum auf. Trotzdem
+  in der ersten Woche die Temperatur im Gehäuse prüfen: LiPo nicht über 45 °C laden und nicht
+  über 60 °C betreiben.
+- **Funk:** Die Antenne des XIAO zeigt zur Stirnwand. Akku, Servo und Edelstahlrahmen sind so
+  weit wie möglich entfernt.
+- **Laden:** Deckel abschrauben (2 × M2) und USB-C einstecken. Die Ladeschaltung sitzt auf
+  dem XIAO.
+
 ## Teile und Druck (Bambu A1)
 
 | Teil | Material | Ausrichtung |
 |---|---|---|
-| `mitnehmer` – Rautenhülse über dem Knopf (+ Zahnsegment) | PETG, bei > 60 °C am Knopf ASA | wird automatisch richtig gedreht, keine Stützen |
-| `halter` – Platte mit Servoausschnitt, zwei Füße | PETG | Platte aufs Bett, **Baumstützen nur unter den Füßen** |
+| `mitnehmer` – Rautenhülse über dem Knopf (+ Zahnrad) | PETG | wird automatisch richtig gedreht, keine Stützen |
+| `gehaeuse` – Wanne mit Zwischenboden und Klebekante | PETG | offene Seite aufs Bett, keine Stützen (Boden überbrückt 21 mm) |
+| `deckel` | PETG | flach |
 | `ritzel` (nur getriebe) | PETG, 100 % Infill | flach |
 
 ```sh
-for p in mitnehmer halter ritzel; do
+for p in mitnehmer gehaeuse deckel; do
   openscad -D 'variante="direkt"' -D "part=\"$p\"" -o "$p.stl" lamellen_aktor.scad
 done
 ```
@@ -32,7 +65,7 @@ done
 Erste Probe: nur den `mitnehmer` drucken und auf den Knopf stecken, um das Spiel (`fit`)
 zu prüfen.
 
-## Maße, die angepasst werden müssen
+## Maße
 
 | Parameter | Bedeutung |
 |---|---|
@@ -40,19 +73,18 @@ zu prüfen.
 | `knob_h` | wie weit der Knopf aus dem Rahmen ragt (gemessen: 15 mm) |
 | `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
 | `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |
-| `feet` | Fußpositionen relativ zur Knopfachse, beide auf dem Rahmenrand |
-| `frame_w` | Breite des Rahmenrands (gemessen: 25 mm) |
-| `foot_size` | Klebefläche; Breite (x) ≤ `frame_w` (16 mm bei 25 mm Rand) |
-| `servo_dir` | 90 = Servo über dem Knopf, 270 = darunter |
+| `frame_w` | Breite des Rahmenrands = Gehäusebreite (gemessen: 25 mm) |
+| `akku` | `"lipo"` oder `"18650"` |
 
-OpenSCAD warnt, wenn ein Fuß mit dem Mitnehmer kollidiert.
+OpenSCAD gibt beim Export die Gehäusemaße aus. Es bricht ab, wenn Servo, Akku oder XIAO
+nicht in die Breite passen.
 
 ## Befestigung
 
-Das Gitter ist nur geklemmt, und der Rahmen ist aus Edelstahl. Am einfachsten werden die
-Füße mit **3M VHB** aufgeklebt (vorher mit Isopropanol entfetten, 24 h aushärten lassen).
-Das hält auf Edelstahl sehr gut und lässt sich wieder ablösen. Gitter und Aktor bleiben eine
-Einheit und lassen sich zum Reinigen zusammen herausziehen.
+Das Gitter ist nur geklemmt, und der Rahmen ist aus Edelstahl. Das Gehäuse wird mit seiner
+Klebekante per **3M VHB** aufgeklebt (vorher mit Isopropanol entfetten, 24 h aushärten
+lassen). Gitter und Aktor bleiben eine Einheit und lassen sich zum Reinigen zusammen
+herausziehen.
 
 ## Montage
 
@@ -62,16 +94,17 @@ Einheit und lassen sich zum Reinigen zusammen herausziehen.
 2. Die Hülse mit der Tasche auf das Horn drücken. Die Hornachse muss dabei entlang der
    Rautenlängsachse liegen. Zwei kleine Hornschrauben von innen durch das Dach in die
    Hornlöcher drehen.
-3. Den Servo von vorn durch die Platte stecken und an den Laschen festschrauben.
-4. Den Aktor mit der Hülse über den Knopf setzen und die Füße aufkleben.
+3. Den Servo von oben in den Zwischenboden stecken und an den Laschen festschrauben.
+4. Akku und XIAO mit Schaumklebeband einkleben, verdrahten und den Deckel aufschrauben.
+5. Das Gehäuse mit der Hülse über den Knopf setzen und aufkleben.
 
 **Getriebe:**
 1. Ein 270°-Microservo im MG90S-Format verwenden (gleiche Befestigungsmaße). Horn auf 9 mm
-   ab Wellenmitte kürzen, in die Tasche des Ritzels legen und mit zwei kleinen
-   Schrauben fixieren. Das Ritzel mit der Mittelschraube (von unten durch die Senkung) auf die
-   Welle schrauben.
-2. Servo in die Platte schrauben. Den Mitnehmer auf den Knopf setzen, die Platte aufsetzen
-   (der Zapfen greift in die Bohrung) und die Füße aufkleben.
+   ab Wellenmitte kürzen, in die Tasche des Ritzels legen und mit zwei kleinen Schrauben
+   fixieren. Das Ritzel mit der Mittelschraube (von unten durch die Senkung) auf die Welle
+   schrauben.
+2. Den Servo einsetzen, den Mitnehmer auf den Knopf setzen und das Gehäuse aufsetzen (der
+   Zapfen greift in die Bohrung). Weiter wie bei „direkt“.
 
 ## Elektronik je Knoten
 
@@ -91,5 +124,4 @@ Einheit und lassen sich zum Reinigen zusammen herausziehen.
   in Tagen leeren.
 - 470 µF Elko direkt am Servo gegen Spannungseinbrüche beim Anlaufen.
 - Laden über den USB-C-Anschluss des XIAO (Ladeschaltung auf dem Board).
-- Ein Gehäuse für Akku und Elektronik folgt. Es soll ebenfalls auf dem Rahmenrand sitzen,
-  unterhalb des Aktors.
+- Die Bauteile sitzen auf einem Stück Lochraster (ca. 20 × 30 mm), das oben auf dem LiPo liegt.
