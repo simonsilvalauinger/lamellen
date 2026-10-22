@@ -6,11 +6,11 @@
 // Möbeln Platz hat und keine Lamellen verdeckt.
 //
 // Varianten:
-//   "direkt"   – Servo sitzt koaxial vor dem Knopf, Horn treibt die Glocke
-//                direkt an (45° Servoweg). Kompakt, wenig Teile. Standard.
-//   "getriebe" – Servo versetzt, 18er-Ritzel treibt ein Zahnsegment an der
-//                Glocke (1:3). Dreifaches Drehmoment für schwergängige Knöpfe
-//                oder große Gitter (Wohnzimmer).
+//   "direkt"   – 180°-Servo (MG90S) sitzt koaxial vor dem Knopf, das Horn
+//                treibt die Hülse direkt an. Kompakt, wenig Teile. Standard.
+//   "getriebe" – 270°-Microservo versetzt, 24er-Ritzel auf 36er-Zahnrad an der
+//                Hülse (1:1,5): 270° Servo = 180° Knopf, 1,5-faches Drehmoment
+//                für schwergängige Knöpfe oder das große Wohnzimmergitter.
 //
 // Export:  openscad -D 'part="mitnehmer"' -o mitnehmer.stl lamellen_aktor.scad
 // Teile:   "assembly", "mitnehmer", "halter", "ritzel" (nur Getriebe), "print"
@@ -27,7 +27,7 @@ knob_angle  = 90;   // Richtung der Längsachse bei der Montage (90 = senkrecht)
 knob_h      = 15;   // wie weit der Knopf aus dem Rahmen ragt (gemessen)
 engage      = 10;   // so tief übergreift die Hülse den Knopf (≤ knob_h)
 wall        = 2.4;  // Wandstärke der Hülse
-knob_travel = 45;   // Drehweg zu → auf
+knob_travel = 180;  // Drehweg des Knopfs zu → auf (Lamellen dabei ca. 75°)
 fit         = 0.3;  // Spiel je Seite (PETG auf dem A1: 0,2–0,3)
 
 /* [Aufbau] */
@@ -35,8 +35,8 @@ servo_dir   = 90;   // Richtung, in die der Servo vom Knopf aus baut (90 = nach 
 
 /* [Getriebe] */
 gear_m      = 1;
-z_pinion    = 18;
-z_knob      = 54;   // Teilung des Zahnsegments (nur ein Ausschnitt wird gedruckt)
+z_pinion    = 24;
+z_knob      = 36;   // bei knob_travel ≥ 165° wird das volle Zahnrad gedruckt
 gear_t      = 6;
 backlash    = 0.15;
 
@@ -64,7 +64,9 @@ $fn = 64;
 // ---------------------------------------------------------------- Ableitungen
 function dir(a) = [cos(a), sin(a)];
 
-bell_r      = knob_len / 2 + fit + wall;  // Reichweite der Hülse ab Achse
+// Die Hülse ist auf den Drehkreis des Knopfs + 1,2 mm begrenzt: beim Drehen
+// überstreicht sie kaum mehr Fläche als der Knopf selbst.
+bell_r      = knob_len / 2 + fit + 1.2;
 bell_z0     = knob_h - engage;
 roof_t      = 4.5;
 direct      = variante == "direkt";
@@ -73,7 +75,7 @@ r_knob_gear = gear_m * z_knob / 2;
 r_pinion    = gear_m * z_pinion / 2;
 center_dist = r_knob_gear + r_pinion;
 pinion_pos  = direct ? [0, 0] : center_dist * dir(servo_dir);
-sector      = 2 * knob_travel + 30;   // deckt beide Drehrichtungen ab
+sector      = min(360, 2 * knob_travel + 30);   // deckt beide Drehrichtungen ab
 
 gear_z0     = knob_h + 1.5;
 horn_seat   = direct ? knob_h + fit + roof_t : gear_z0 + gear_t;
@@ -87,7 +89,8 @@ echo(str("Variante ", variante, ", Bauhöhe ab Rahmen ca. ", plate_front + 23, "
 assert(plate_z0 > horn_seat + 0.8, "servo_below_tab zu klein für die Platte");
 // Das Zahnsegment reicht nur in Richtung Servo über die Glocke hinaus.
 function angdiff(a, b) = abs((a - b + 540) % 360 - 180);
-function reach(f) = !direct && angdiff(atan2(f[1], f[0]), servo_dir) <= sector / 2 + 10
+function reach(f) = !direct && sector >= 360 ? r_knob_gear + gear_m
+    : !direct && angdiff(atan2(f[1], f[0]), servo_dir) <= sector / 2 + 10
     ? r_knob_gear + gear_m : bell_r;
 for (f = feet)
     if (norm(f) < reach(f) + leg_w * 0.71 + 1)
@@ -133,14 +136,21 @@ module knob2d() {
     rotate(knob_angle) polygon([[knob_len / 2, 0], [0, knob_w / 2], [-knob_len / 2, 0], [0, -knob_w / 2]]);
 }
 
+module sleeve2d() {
+    intersection() {
+        offset(r = wall) offset(r = fit) knob2d();
+        circle(r = bell_r);
+    }
+}
+
 module knob_cavity(h) {
-    linear_extrude(h) offset(delta = fit) knob2d();
+    linear_extrude(h) offset(r = fit) knob2d();
 }
 
 // Hülse um den Knopf; ab Knopfoberkante darf sie breiter werden (Dach = 2D-Kind)
 module sleeve(z_top) {
     translate([0, 0, bell_z0]) linear_extrude(knob_h + fit - bell_z0 + 0.01)
-        offset(r = wall) offset(delta = fit) knob2d();
+        sleeve2d();
     translate([0, 0, knob_h + fit]) linear_extrude(z_top - knob_h - fit) children();
 }
 
@@ -150,8 +160,11 @@ module sleeve(z_top) {
 module mitnehmer_direkt() {
     top = knob_h + fit + roof_t;
     module roof2d() hull() {
-        offset(r = wall) offset(delta = fit) knob2d();
-        rotate(servo_dir + 180) offset(r = 2.4) horn_pocket2d();
+        sleeve2d();
+        intersection() {
+            rotate(servo_dir + 180) offset(r = 2.4) horn_pocket2d();
+            circle(r = bell_r);
+        }
     }
     difference() {
         sleeve(top) roof2d();
@@ -169,17 +182,19 @@ module mitnehmer_direkt() {
 // Mitnehmer „getriebe“: Glocke + Zahnsegment Richtung Servo.
 module mitnehmer_getriebe() {
     module roof2d() hull() {
-        offset(r = wall) offset(delta = fit) knob2d();
+        sleeve2d();
         circle(d = axle_d + 6);
     }
     difference() {
         union() {
             sleeve(gear_z0) roof2d();
-            translate([0, 0, gear_z0 - 0.01]) linear_extrude(gear_t + 0.01) offset(r = wall) offset(delta = fit) knob2d();
-            translate([0, 0, gear_z0]) linear_extrude(gear_t) intersection() {
-                gear2d(gear_m, z_knob);
-                wedge2d(r_knob_gear + 2 * gear_m, servo_dir - sector / 2, servo_dir + sector / 2);
-            }
+            translate([0, 0, gear_z0 - 0.01]) linear_extrude(gear_t + 0.01) sleeve2d();
+            translate([0, 0, gear_z0]) linear_extrude(gear_t)
+                if (sector >= 360) gear2d(gear_m, z_knob);
+                else intersection() {
+                    gear2d(gear_m, z_knob);
+                    wedge2d(r_knob_gear + 2 * gear_m, servo_dir - sector / 2, servo_dir + sector / 2);
+                }
             // Steg, der das Segment mit der Glocke verbindet
             translate([0, 0, gear_z0]) linear_extrude(gear_t)
                 wedge2d(r_knob_gear - 1.25 * gear_m + 0.01, servo_dir - sector / 2, servo_dir + sector / 2);

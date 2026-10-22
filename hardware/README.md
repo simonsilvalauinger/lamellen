@@ -1,16 +1,16 @@
 # Hardware: Lamellen-Aktor
 
 Für Edelstahl-Lüftungsgitter mit einem kleinen, rautenförmigen Drehknopf auf dem Rahmenrand
-(35 × 9 mm). Der Knopf
-verstellt die Lamellen um 45° und dreht sich dabei nur, ohne vor oder zurück zu wandern.
+(35 × 9 mm, ragt 15 mm heraus). Der Knopf dreht 180° und verstellt die Lamellen dabei um ca. 75°.
+Im geschlossenen Zustand überlappen sich die Lamellen.
 Der Aktor baut **nur entlang des Rahmenrands** (Standard: Servo oberhalb des Knopfs). Er
 verdeckt keine Lamellen und passt neben Möbel, die direkt am Gitter stehen.
 
 | Variante „direkt“ (Standard) | Variante „getriebe“ |
 |---|---|
 | ![direkt](vorschau_direkt.png) | ![getriebe](vorschau_getriebe.png) |
-| Servo koaxial vor dem Knopf, 45° Servoweg | 18er-Ritzel + Zahnsegment, 1:3, 135° Servoweg |
-| 2 Teile, ca. 53 mm Bauhöhe | 3 Teile, dreifaches Drehmoment |
+| MG90S (180°) koaxial vor dem Knopf | 270°-Microservo, 24er-Ritzel auf 36er-Zahnrad (1:1,5) |
+| 2 Teile, ca. 53 mm Bauhöhe | 3 Teile, 1,5-faches Drehmoment |
 | für leichtgängige Knöpfe | für schwergängige Knöpfe / das große Wohnzimmergitter |
 
 Variante wählen: `variante = "direkt";` oder `"getriebe"` oben in `lamellen_aktor.scad`.
@@ -65,7 +65,8 @@ Einheit und lassen sich zum Reinigen zusammen herausziehen.
 4. Den Aktor mit der Hülse über den Knopf setzen und die Füße aufkleben.
 
 **Getriebe:**
-1. Horn auf 9 mm ab Wellenmitte kürzen, in die Tasche des Ritzels legen und mit zwei kleinen
+1. Ein 270°-Microservo im MG90S-Format verwenden (gleiche Befestigungsmaße). Horn auf 9 mm
+   ab Wellenmitte kürzen, in die Tasche des Ritzels legen und mit zwei kleinen
    Schrauben fixieren. Das Ritzel mit der Mittelschraube (von unten durch die Senkung) auf die
    Welle schrauben.
 2. Servo in die Platte schrauben. Den Mitnehmer auf den Knopf setzen, die Platte aufsetzen

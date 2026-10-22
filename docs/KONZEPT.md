@@ -15,7 +15,8 @@
 
 - 7 Raumauslässe, **alle** sollen gesteuert werden (auch Wohnzimmer und Küche).
 - Die Lamellen werden über einen Drehknopf verstellt, der wie eine Flügelmutter aus Kunststoff aussieht.
-  Weg: 0–45°, der Knopf dreht nur und wandert nicht axial.
+  Der Knopf dreht 180°, die Lamellen dabei ca. 75°. Er wandert nicht axial. Geschlossen
+  überlappen sich die Lamellen. Knopf: Raute 35 × 9 mm, ragt 15 mm aus dem Rahmen.
 - Die Gitter sind nur geklemmt (keine Schrauben).
 - **An den Gittern gibt es keine Steckdosen** → Batteriebetrieb.
 - Klappen gibt es nur am Anfang der Schächte (an der Heizung, dort gibt es Strom).
@@ -37,9 +38,9 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 
 > **Umgesetzt:** `hardware/lamellen_aktor.scad`, siehe `hardware/README.md`. Die Gitter sind
 > Edelstahlgitter mit einem kleinen Drehknopf auf dem linken Rahmenrand, direkt daneben steht
-> teils ein Möbel. Der Aktor baut deshalb nur entlang des Rahmenrands: MG90S koaxial vor dem
-> Knopf (Variante „direkt“) oder mit 1:3-Zahnsegment (Variante „getriebe“, z. B. für das große
-> Wohnzimmergitter). Die Füße werden mit VHB auf den Rahmen geklebt.
+> teils ein Möbel. Der Aktor baut deshalb nur entlang des Rahmenrands: 180°-Servo (MG90S)
+> koaxial vor dem Knopf (Variante „direkt“) oder 270°-Servo mit 1:1,5-Zahnrädern (Variante
+> „getriebe“, z. B. für das große Wohnzimmergitter). Die Füße werden mit VHB auf den Rahmen geklebt.
 
 ### Kopplung an die Flügelmutter
 

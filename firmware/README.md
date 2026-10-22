@@ -26,7 +26,7 @@ unbekannter Raum führt schon zu einem Compilerfehler.
 
 ```sh
 cd node
-LAMELLE_ROOM=schlafzimmer LAMELLE_CLOSED_US=1250 LAMELLE_OPEN_US=1750 cargo run --release
+LAMELLE_ROOM=schlafzimmer LAMELLE_CLOSED_US=600 LAMELLE_OPEN_US=2400 cargo run --release
 ```
 
 Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeitszimmer`,
@@ -34,7 +34,12 @@ Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeits
 
 ### Kalibrieren
 
-Standardwerte: Variante „direkt“ 1250/1750 µs, Variante „getriebe“ etwa 750/2250 µs.
+Der Knopf dreht 180° (die Lamellen dabei ca. 75°). Standardwerte: Variante „direkt“
+600/2400 µs, Variante „getriebe“ (270°-Servo) etwa 830/2170 µs.
+
+Den Wert für „offen“ so wählen, dass der Servo **knapp vor** dem Anschlag des Knopfs stehen
+bleibt. Drückt er gegen den Anschlag, zieht er Blockierstrom, bis er stromlos geschaltet wird.
+Den Anschlag „zu“ erreicht er nie, weil die Firmware mindestens 15 % offen hält.
 
 1. Den Knoten flashen, bevor der Servo mit dem Gitter verbunden ist. Nach dem Flashen fährt
    er auf `LAMELLE_OPEN_US` (100 %).

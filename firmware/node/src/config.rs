@@ -14,11 +14,12 @@ pub const ROOM: Room = match Room::from_slug(or(option_env!("LAMELLE_ROOM"), "sc
 };
 
 /// Pulsbreiten für „zu“ (0 %) und „offen“ (100 %), pro Gitter kalibrieren.
-/// Standard passt zur Variante „direkt“ (45° am Servo, MG90S ≈ 11 µs/°).
-/// Für die Variante „getriebe“ (135° am Servo) etwa 750 / 2250 µs.
+/// Der Knopf dreht 180°. Standard passt zur Variante „direkt“ (MG90S, 180°
+/// bei etwa 500–2500 µs), mit etwas Abstand zu den Servo-Endlagen.
+/// Variante „getriebe“ (270°-Servo, 1:1,5) braucht etwa 830 / 2170 µs.
 pub const SERVO: ServoCalibration = ServoCalibration {
-    closed_us: parse_u16(or(option_env!("LAMELLE_CLOSED_US"), "1250")),
-    open_us: parse_u16(or(option_env!("LAMELLE_OPEN_US"), "1750")),
+    closed_us: parse_u16(or(option_env!("LAMELLE_CLOSED_US"), "600")),
+    open_us: parse_u16(or(option_env!("LAMELLE_OPEN_US"), "2400")),
 };
 
 pub const NODE: NodeConfig = NodeConfig::DEFAULT;
