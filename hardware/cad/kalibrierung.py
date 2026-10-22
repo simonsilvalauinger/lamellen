@@ -20,7 +20,9 @@ import trimesh
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lamellen as L  # noqa: E402
 
-WIDTHS = [10.0, 10.25, 10.5, 10.75, 11.0]   # knob_w der Proben
+# knob_w der Proben: aktueller Wert der Modelle ± 1 mm in 0,5-mm-Schritten
+STEPS = [-1.0, -0.5, 0.0, 0.5, 1.0]
+WIDTHS = [L.P.knob_w + d for d in STEPS]
 HEIGHT = 8.0                                 # Ringhöhe (reicht zum Aufstecken)
 TAB = (12.0, 7.0, 1.6)                       # Lasche: Länge, Breite, Dicke
 OUT = Path(__file__).resolve().parent.parent / "export" / "kalibrierung"

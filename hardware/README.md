@@ -26,13 +26,14 @@ Baugruppe.
 ### Kalibrierserie für die Hülse
 
 [`export/kalibrierung/huelse_passprobe.3mf`](export/kalibrierung/) enthält fünf kurze,
-offene Hülsenringe (8 mm hoch, ohne Zahnkranz) mit `knob_w` = 10,00 / 10,25 / 10,50 / 10,75 /
-11,00 mm. Der Wert ist in die Lasche eingraviert. Druckzeit nur wenige Minuten.
+offene Hülsenringe (8 mm hoch, ohne Zahnkranz) mit `knob_w` = 11,25 / 11,75 / 12,25 / 12,75 /
+13,25 mm, also dem aktuellen Wert ± 1 mm in 0,5-mm-Schritten. Der Wert ist in die Lasche eingraviert. Druckzeit nur wenige Minuten.
 
 Alle Ringe nacheinander auf den Knopf stecken. Der passende Ring sitzt ohne Kraft, wackelt aber
 kaum. Seinen Wert als `knob_w` in `lamellen_aktor.scad` und `cad/lamellen.py` eintragen und neu
 exportieren. Länge, Spiel und Wandstärke entsprechen genau der echten Hülse. Andere
-Breiten: `WIDTHS` in `cad/kalibrierung.py` ändern und `python3 cad/kalibrierung.py` ausführen.
+Die Serie legt sich immer um den aktuellen `knob_w`. Andere Schritte: `STEPS` in
+`cad/kalibrierung.py` ändern und `python3 cad/kalibrierung.py` ausführen.
 
 ### Exaktes CAD-Modell
 
@@ -168,7 +169,7 @@ zu prüfen.
 
 | Parameter | Bedeutung |
 |---|---|
-| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 10 mm; `knob_w` = 10,25 nach der ersten Passprobe) |
+| `knob_len`, `knob_w` | Länge und größte Breite der Raute (gemessen: 35 / 10 mm; `knob_w` = 12,25 nach der Passprobe) |
 | `knob_h` | wie weit der Knopf aus dem Rahmen ragt (gemessen: 17 mm) |
 | `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
 | `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |

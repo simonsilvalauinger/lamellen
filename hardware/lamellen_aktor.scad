@@ -33,7 +33,7 @@ variante  = "stirn";   // "stirn", "kegel", "direkt" oder "getriebe"
 
 /* [Knopf (rautenförmig, von vorn gesehen)] */
 knob_len    = 35;   // Länge der Raute (Spitze bis Spitze)
-knob_w      = 10.25; // Breite an der breitesten Stelle (gemessen 10, +0,25 nach Passprobe)
+knob_w      = 12.25; // Breite an der breitesten Stelle (gemessen 10, +2,25 nach Passprobe)
 knob_angle  = 90;   // Richtung der Längsachse bei der Montage (90 = senkrecht)
 knob_h      = 17;   // wie weit der Knopf aus dem Rahmen ragt (gemessen)
 engage      = 10;   // so tief übergreift die Hülse den Knopf (≤ knob_h)
