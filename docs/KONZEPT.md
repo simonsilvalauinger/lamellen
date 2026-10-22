@@ -40,8 +40,9 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 > Edelstahlgitter mit einem kleinen Drehknopf auf dem linken Rahmenrand, direkt daneben steht
 > teils ein Möbel. Der Aktor baut deshalb nur entlang des Rahmenrands: 180°-Servo (MG90S)
 > koaxial vor dem Knopf (Variante „direkt“) oder 270°-Servo mit 1:1,5-Zahnrädern (Variante
-> „getriebe“, z. B. für das große Wohnzimmergitter). Servo, Akku (LiPo 1000 mAh oder 18650) und XIAO sitzen
-> zusammen in einem 25 mm breiten Gehäuse, das mit VHB auf den Rahmen geklebt wird.
+> „getriebe“, z. B. für das große Wohnzimmergitter). Servo, Akku (18650 oder LiPo) und XIAO sitzen
+> in einem gestuften, 25 mm breiten Gehäuse: Servoturm über dem Knopf, Akku- und
+> Elektronikfach flach daneben. Es wird mit VHB auf den Rahmen geklebt.
 
 ### Kopplung an die Flügelmutter
 

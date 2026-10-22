@@ -17,52 +17,51 @@ Variante wählen: `variante = "direkt";` oder `"getriebe"` oben in `lamellen_akt
 
 ## Ein Gehäuse für alles
 
-Servo, Akku und Mikrocontroller sitzen in **einem** Gehäuse auf dem Rahmenrand. Es ist
-25 mm breit wie der Rand und steht etwa 55 mm aus der Wand.
+Servo, Akku und Mikrocontroller sitzen in **einem** 25 mm breiten Gehäuse auf dem
+Rahmenrand. Es ist gestuft: Nur der Servoturm über dem Knopf ist hoch, Akku und Elektronik
+liegen flach daneben direkt auf dem Rahmen.
 
 ```
-  oben   ┌─────────┐  ← Schraubdom (Deckel)
-         │  Servo  │
-  Knopf ─┼─────────┼─ Zwischenboden; darunter dreht die Hülse (seitlich offen)
-         │  LiPo   │  ← Lochrasterplatine (MOSFETs, Teiler) liegt oben auf dem Akku
-         │         │    (18650: Akku über dem Servo, Platine hier)
-         │         │
-         ├ ─ ─ ─ ─ ┤  ← Schraubdom
-         │  XIAO   │  Antenne zur Stirnwand, weg von Akku und Servo
-  unten  └─────────┘
+          Seitenansicht (Standard: 18650, „direkt“)
+
+                 ┌────────┐ 55 mm
+                 │ Servo  │
+   ┌──────┐      ├────────┤      ┌──────────────────┐ 25 mm
+   │XIAO│Platine │ Knopf  │      │   18650-Akku     │
+═══╧════╧════════╧════════╧══════╧══════════════════╧═══ Rahmen
+   ← unten  88,5 mm      Knopfmitte           112 mm  oben →
 ```
 
-| Akku (`akku = …`) | Gehäuselänge | über / unter der Knopfachse | Laufzeit (Schätzung) |
-|---|---|---|---|
-| `"lipo"` – LiPo 102050, ca. 1000 mAh, 50 × 20 × 10 mm (Standard) | 125 mm | 31 / 94 mm | ca. eine Heizperiode |
-| `"18650"` – Rundzelle mit Lötfahnen und Schutzschaltung, ca. 3000 mAh | 169 mm | 102 / 67 mm | mehrere Jahre |
+| Akku (`akku = …`) | Länge | über / unter der Knopfmitte | Höhe Akkufach | Laufzeit (Schätzung) |
+|---|---|---|---|---|
+| `"18650"` – Rundzelle mit Lötfahnen und Schutzschaltung, ca. 3000 mAh (Standard) | 200 mm | 112 / 88,5 mm | 25 mm | mehrere Jahre |
+| `"lipo"` – LiPo 102050, ca. 1000 mAh, 50 × 20 × 10 mm | 180 mm | 92 / 88,5 mm | 17 mm | ca. eine Heizperiode |
 
-Beim 18650 liegt der Akku automatisch **über** dem Servo (`akku_pos = "oben"`); Platine und
-XIAO bleiben unten. Gemessener Platz am Gitter: 107,5 mm unter und 120 mm über der
-Knopfmitte (`space_below`, `space_above`). OpenSCAD bricht mit einer Meldung ab, wenn das
-Gehäuse über den Rahmen hinausragen würde.
+Servoturm (55 mm, 65 mm lang) und Elektronikfach (15 mm) sind bei beiden gleich.
+Gemessener Platz am Gitter: 107,5 mm unter und 120 mm über der Knopfmitte (`space_below`,
+`space_above`). OpenSCAD bricht mit einer Meldung ab, wenn das Gehäuse über den Rahmen
+hinausragen würde. Die Variante „getriebe“ passt nur mit LiPo.
 
-| | direkt | getriebe |
-|---|---|---|
-| LiPo | passt (31 / 94 mm) | passt (61 / 64 mm) |
-| 18650 | passt (102 / 67 mm) | passt nicht (12 mm zu lang) |
-
-- **Wärme:** Der Akku liegt auf dem Zwischenboden etwa 30 mm über dem Rahmen. Durch den
-  Luftspalt mit Lüftungsschlitzen darunter heizt der warme Rahmen den Akku kaum auf. Trotzdem
-  in der ersten Woche die Temperatur im Gehäuse prüfen: LiPo nicht über 45 °C laden und nicht
-  über 60 °C betreiben.
-- **Funk:** Die Antenne des XIAO zeigt zur Stirnwand. Akku, Servo und Edelstahlrahmen sind so
-  weit wie möglich entfernt.
-- **Laden:** Deckel abschrauben (2 × M2) und USB-C einstecken. Die Ladeschaltung sitzt auf
-  dem XIAO.
+- **Kabel:** Aus den Fächern laufen die Kabel in je einen Schacht an den Turmenden, durch den
+  Zwischenboden und neben dem Servo entlang. Durch den Drehbereich des Knopfs läuft nie ein
+  Kabel.
+- **Wärme:** Akku und Elektronik liegen direkt auf dem Rahmen, der Akku auf 2 mm hohen
+  Rippen. In der ersten Heizwoche die Temperatur im Akkufach prüfen: Li-Ion nicht über 45 °C
+  laden und nicht über 60 °C betreiben. Wird es zu warm, `rib_h` erhöhen.
+- **Funk:** Der XIAO sitzt am unteren Ende, die Antenne zeigt zur Stirnwand und damit weg von
+  Akku und Servo.
+- **Laden:** Deckel des Elektronikfachs abschrauben (1 × M2) und USB-C einstecken. Die
+  Ladeschaltung sitzt auf dem XIAO.
+- **Platine:** Lochraster ca. 21 × 24 mm, Bauteile höchstens 9 mm hoch. Den Elko liegend
+  einbauen.
 
 ## Teile und Druck (Bambu A1)
 
 | Teil | Material | Ausrichtung |
 |---|---|---|
 | `mitnehmer` – Rautenhülse über dem Knopf (+ Zahnrad) | PETG | wird automatisch richtig gedreht, keine Stützen |
-| `gehaeuse` – Wanne mit Zwischenboden und Klebekante | PETG | offene Seite aufs Bett, keine Stützen (Boden überbrückt 21 mm) |
-| `deckel` | PETG | flach |
+| `gehaeuse` – Turm und beide Fächer in einem Stück | PETG | Rahmenseite aufs Bett, **Baumstützen nur unter dem Zwischenboden** (Drehbereich) |
+| `deckel` – Turmdeckel (gesteckt) und zwei Fachdeckel (je 1 × M2) | PETG | flach, alle drei in einer Datei |
 | `ritzel` (nur getriebe) | PETG, 100 % Infill | flach |
 
 ```sh
@@ -83,15 +82,16 @@ zu prüfen.
 | `engage` | wie tief die Hülse über den Knopf greift (≤ `knob_h`) |
 | `knob_angle` | Lage der Rautenlängsachse bei der Montage (90 = senkrecht) |
 | `frame_w` | Breite des Rahmenrands = Gehäusebreite (gemessen: 25 mm) |
-| `akku` | `"lipo"` oder `"18650"` |
+| `akku` | `"18650"` oder `"lipo"` |
+| `space_below`, `space_above` | Platz von der Knopfmitte bis zum Rahmenende (gemessen: 107,5 / 120 mm) |
 
 OpenSCAD gibt beim Export die Gehäusemaße aus. Es bricht ab, wenn Servo, Akku oder XIAO
 nicht in die Breite passen.
 
 ## Befestigung
 
-Das Gitter ist nur geklemmt, und der Rahmen ist aus Edelstahl. Das Gehäuse wird mit seiner
-Klebekante per **3M VHB** aufgeklebt (vorher mit Isopropanol entfetten, 24 h aushärten
+Das Gitter ist nur geklemmt, und der Rahmen ist aus Edelstahl. Das Gehäuse wird mit den
+Böden der beiden Fächer per **3M VHB** aufgeklebt (vorher mit Isopropanol entfetten, 24 h aushärten
 lassen). Gitter und Aktor bleiben eine Einheit und lassen sich zum Reinigen zusammen
 herausziehen.
 
@@ -104,7 +104,8 @@ herausziehen.
    Rautenlängsachse liegen. Zwei kleine Hornschrauben von innen durch das Dach in die
    Hornlöcher drehen.
 3. Den Servo von oben in den Zwischenboden stecken und an den Laschen festschrauben.
-4. Akku und XIAO mit Schaumklebeband einkleben, verdrahten und den Deckel aufschrauben.
+4. Akku, Platine und XIAO mit Schaumklebeband in die Fächer kleben. Die Kabel durch die
+   Schächte führen und verdrahten. Dann die Deckel aufsetzen.
 5. Das Gehäuse mit der Hülse über den Knopf setzen und aufkleben.
 
 **Getriebe:**
@@ -133,4 +134,4 @@ herausziehen.
   in Tagen leeren.
 - 470 µF Elko direkt am Servo gegen Spannungseinbrüche beim Anlaufen.
 - Laden über den USB-C-Anschluss des XIAO (Ladeschaltung auf dem Board).
-- Die Bauteile sitzen auf einem Stück Lochraster (ca. 20 × 30 mm), das oben auf dem LiPo liegt.
+- Die Bauteile sitzen auf einem Stück Lochraster (ca. 21 × 24 mm) im Elektronikfach.
