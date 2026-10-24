@@ -9,6 +9,10 @@ Rahmenrand. Nur der Servoturm am Knopf ist hoch, Akku und Elektronik liegen flac
 
 ![Variante stirn](vorschau_stirn.png)
 
+> **Alternative:** Statt des Aktors gibt es ein komplett gedrucktes, steuerbares
+> Lamellengitter, das das Edelstahlgitter ersetzt (gleiche Elektronik und Firmware, nichts
+> ragt über den Rand). Siehe [`GITTER.md`](GITTER.md).
+
 ## Dateien für Bambu Studio und Onshape
 
 Fertige Exporte der Standardvariante „stirn“ liegen in [`export/stirn/`](export/stirn/):

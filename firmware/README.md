@@ -36,6 +36,7 @@ Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeits
 
 Der Knopf dreht 180° (die Lamellen dabei ca. 75°). Standardwerte: Varianten „stirn“,
 „kegel“ und „direkt“ (1:1) 600/2400 µs, Variante „getriebe“ (270°-Servo) etwa 830/2170 µs.
+Das gedruckte Lamellengitter (`hardware/GITTER.md`) braucht nur ±40°: etwa 1060/1940 µs.
 Bei den Zahnradvarianten dreht der Knopf entgegengesetzt zum Servo. Schließt das Gitter bei
 100 %, die beiden Werte tauschen.
 

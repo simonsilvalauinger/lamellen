@@ -45,6 +45,11 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 > Knopf („direkt“, 57 mm) oder 270°-Servo mit Stirnrädern 1:1,5 („getriebe“). Servo, Akku (18650 oder LiPo) und XIAO sitzen
 > in einem gestuften, 25 mm breiten Gehäuse: Servoturm über dem Knopf, Akku- und
 > Elektronikfach flach daneben. Es wird mit VHB auf den Rahmen geklebt.
+>
+> **Alternative:** ein komplett gedrucktes Lamellengitter als Ersatz für das Edelstahlgitter
+> (`hardware/lamellengitter.scad`, siehe `hardware/GITTER.md`). Es klemmt wie das alte im
+> Schacht, die Lamellen hängen über Kurbeln an einer Koppelstange in einer Seitentasche, und
+> Servo, Akku und XIAO sitzen in einer Haube auf dem linken Blendenrand.
 
 ### Kopplung an die Flügelmutter
 

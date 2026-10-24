@@ -12,7 +12,11 @@ Erzeugt je Variante in hardware/export/<variante>/:
   step/<teil>.step                 Teile in Einbaulage als Volumenkörper (Onshape)
   lamellen_<variante>_baugruppe.step  alle Teile + Platzhalter für Servo, Knopf, Akku
 
-Aufruf:  python3 tools/export.py [variante ...]      (Standard: stirn)
+Das gedruckte Lamellengitter (lamellengitter.scad) als Ganzes ersetzt das
+Edelstahlgitter; es landet in hardware/export/gitter/ und hat je Druckplatte
+eine eigene 3MF-Datei.
+
+Aufruf:  python3 tools/export.py [variante ...]      (Standard: stirn; „gitter“ für das Gitter)
 Benötigt: openscad und die Pakete aus tools/requirements.txt.
 """
 
@@ -58,6 +62,17 @@ PRINT_PARTS = {
 }
 REFERENCES = ["ref_servo", "ref_elektronik", "ref_rahmen"]
 
+# Gedrucktes Lamellengitter: Druckplatten (3MF) mit ihren Teilen
+GITTER_SCAD = HERE / "lamellengitter.scad"
+GITTER_PLATES = {
+    "gitter_rahmen": ["rahmen"],
+    "gitter_lamellen": ["lamelle"],          # n-mal, siehe gitter_lamellen()
+    "gitter_antrieb": ["haube", "koppelstange", "kurbel"],
+    "gitter_proben": ["probe_einschub", "probe_lager"],
+}
+GITTER_EINBAU = ["rahmen", "lamellen", "koppelstange", "kurbel", "haube"]
+GITTER_REFERENCES = ["ref_servo", "ref_elektronik", "ref_schacht"]
+
 # Farben in Onshape (RGB 0–1)
 COLORS = {
     "mitnehmer": (1.0, 0.55, 0.0),
@@ -68,15 +83,21 @@ COLORS = {
     "deckel_elektronik": (0.45, 0.7, 0.55),
     "ref_servo": (0.25, 0.4, 0.85),
     "ref_knopf": (0.1, 0.1, 0.1),
+    "rahmen": (0.92, 0.92, 0.9),
+    "lamellen": (0.7, 0.78, 0.88),
+    "koppelstange": (1.0, 0.55, 0.0),
+    "kurbel": (0.95, 0.8, 0.1),
+    "haube": (0.3, 0.6, 0.45),
 }
 DEFAULT_COLOR = (0.6, 0.6, 0.6)
 
 
-def openscad(part: str, variante: str, out: Path) -> trimesh.Trimesh | None:
+def openscad(part: str, variante: str | None, out: Path, scad: Path = SCAD) -> trimesh.Trimesh | None:
     """Rendert einen Teil; None, wenn er in dieser Variante leer ist."""
-    result = subprocess.run(
-        ["openscad", "-D", f'part="{part}"', "-D", f'variante="{variante}"', "-o", str(out), str(SCAD)],
-        capture_output=True, text=True)
+    args = ["openscad", "-D", f'part="{part}"']
+    if variante:
+        args += ["-D", f'variante="{variante}"']
+    result = subprocess.run(args + ["-o", str(out), str(scad)], capture_output=True, text=True)
     if "Current top level object is empty" in result.stderr:
         return None
     if result.returncode != 0:
@@ -188,7 +209,51 @@ def export_cadquery(variante: str) -> None:
     print(f"  {variante}: lamellen_{variante}_baugruppe.step")
 
 
+def gitter_lamellen(tmp: Path) -> int:
+    """Anzahl der Lamellen aus der Meldung von lamellengitter.scad."""
+    result = subprocess.run(["openscad", "-D", 'part="ref_servo"', "-o", str(tmp / "n.stl"), str(GITTER_SCAD)],
+                            capture_output=True, text=True)
+    return int(result.stderr.split(" Lamellen")[0].rsplit(" ", 1)[1])
+
+
+def export_gitter() -> None:
+    """Gedrucktes Lamellengitter: je Druckplatte eine 3MF, Teile als STL und STEP."""
+    target = OUT / "gitter"
+    (target / "stl").mkdir(parents=True, exist_ok=True)
+    (target / "step").mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        n = gitter_lamellen(tmp)
+        for plate, parts in GITTER_PLATES.items():
+            printed = {}
+            for part in parts:
+                mesh = openscad(part, None, tmp / f"{part}.stl", GITTER_SCAD)
+                mesh.export(target / "stl" / f"{part}.stl")
+                print(f"  gitter: {part}.stl")
+                if part == "lamelle":
+                    printed.update({f"lamelle_{i + 1}": mesh for i in range(n)})
+                else:
+                    printed[part] = mesh
+            arrange(printed).export(target / f"{plate}.3mf")
+            print(f"  gitter: {plate}.3mf")
+
+        assembly = []
+        for part in [f"einbau_{p}" for p in GITTER_EINBAU] + GITTER_REFERENCES:
+            mesh = openscad(part, None, tmp / f"{part}.stl", GITTER_SCAD)
+            name = part.removeprefix("einbau_")
+            solid = mesh_to_solid(mesh)
+            if not part.startswith("ref_"):
+                write_step([(name, solid)], target / "step" / f"{name}.step")
+                print(f"  gitter: {name}.step")
+            assembly.append((name, solid))
+        write_step(assembly, target / "lamellengitter_baugruppe.step")
+        print("  gitter: lamellengitter_baugruppe.step")
+
+
 def export(variante: str) -> None:
+    if variante == "gitter":
+        export_gitter()
+        return
     if variante == "stirn":
         export_cadquery(variante)
         return
