@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Kollisionsprüfung für das gedruckte Lamellengitter (lamellengitter.scad).
+"""Kollisionsprüfung für die gedruckten Lamellengitter.
 
 Rendert die Teile in Einbaulage über den ganzen Hub (zu → offen) und prüft, dass
-sich keine zwei Teile durchdringen: Lamellen untereinander und gegen Rahmen,
-Koppelstange und Servokurbel, die Kurbel gegen Haube und Servo, Akku und Servo
-gegen die Haube. Eine Gegenprobe (Lamellen weiter geschlossen als erlaubt) muss
-anschlagen, sonst ist die Prüfung blind.
+sich keine zwei Teile durchdringen. Eine Gegenprobe muss anschlagen, sonst ist
+die Prüfung blind.
 
-Aufruf:  python3 tools/check_gitter.py      (Exit-Code 1 bei Fehlern)
+  servo     lamellengitter.scad           (Haube, Servo, Kulisse)
+  schnecke  lamellengitter_schnecke.scad  (Kammer im Schacht, Schneckenmotor, AS5600)
+
+Aufruf:  python3 tools/check_gitter.py [servo|schnecke ...]   (Standard: beide;
+         Exit-Code 1 bei Fehlern)
 """
 
 import itertools
@@ -20,7 +22,8 @@ from pathlib import Path
 import trimesh
 
 HERE = Path(__file__).resolve().parent.parent
-SCAD = HERE / "lamellengitter.scad"
+SCAD = {"servo": HERE / "lamellengitter.scad", "schnecke": HERE / "lamellengitter_schnecke.scad"}
+STEPS = [0, 0.25, 0.5, 0.75, 1]
 LIMIT = 0.5   # mm³, Rundungsreste der Facettierung
 failures = 0
 
@@ -31,15 +34,24 @@ def report(ok: bool, text: str) -> None:
     print(f"{'OK       ' if ok else 'FEHLER   '} {text}")
 
 
-def render(tmp: Path, part: str, **defs) -> trimesh.Trimesh:
-    name = part + "".join(f"_{k}{v}" for k, v in defs.items())
-    out = tmp / f"{name}.stl"
-    if not out.exists():
-        args = ["openscad", "-D", f'part="{part}"']
-        for k, v in defs.items():
-            args += ["-D", f"{k}={v}"]
-        subprocess.run(args + ["-o", str(out), str(SCAD)], check=True, capture_output=True)
-    return trimesh.load_mesh(out)
+class Model:
+    def __init__(self, scad: Path, tmp: Path):
+        self.scad, self.tmp = scad, tmp
+
+    def __call__(self, part: str, **defs) -> trimesh.Trimesh:
+        name = self.scad.stem + "_" + part + "".join(f"_{k}{v}" for k, v in defs.items())
+        out = self.tmp / f"{name}.stl"
+        if not out.exists():
+            args = ["openscad", "-D", f'part="{part}"']
+            for k, v in defs.items():
+                args += ["-D", f"{k}={v}"]
+            subprocess.run(args + ["-o", str(out), str(self.scad)], check=True, capture_output=True)
+        return trimesh.load_mesh(out)
+
+    def n_lamellen(self) -> int:
+        result = subprocess.run(["openscad", "-D", 'part="ref_schacht"', "-o", str(self.tmp / "n.stl"),
+                                 str(self.scad)], capture_output=True, text=True)
+        return int(re.search(r"(\d+) Lamellen", result.stderr).group(1))
 
 
 def overlap(a: trimesh.Trimesh, b: trimesh.Trimesh) -> float:
@@ -49,43 +61,71 @@ def overlap(a: trimesh.Trimesh, b: trimesh.Trimesh) -> float:
     return inter.volume if len(inter.faces) else 0.0
 
 
-def n_lamellen() -> int:
-    result = subprocess.run(["openscad", "-D", 'part="ref_servo"', "-o", "/dev/null", "--export-format", "stl",
-                             str(SCAD)], capture_output=True, text=True)
-    return int(re.search(r"(\d+) Lamellen", result.stderr).group(1))
+def check(name: str, pairs: dict[str, float]) -> None:
+    for text, vol in pairs.items():
+        report(vol < LIMIT, f"{name}: {text} ({vol:.2f} mm³)")
+
+
+def check_servo(m: Model) -> None:
+    n = m.n_lamellen()
+    rahmen, haube = m("einbau_rahmen"), m("einbau_haube")
+    servo, elektronik = m("ref_servo"), m("ref_elektronik")
+    check("servo", {"Servo hängt frei in der Haube": overlap(haube, servo),
+                    "Akku, Platine und XIAO in der Haube": overlap(haube, elektronik),
+                    "Servo / Blende": overlap(rahmen, servo)})
+    for o in STEPS:
+        lam = [m("einbau_lamelle", oeffnung=o, nr=i) for i in range(n)]
+        stange, kurbel = m("einbau_koppelstange", oeffnung=o), m("einbau_kurbel", oeffnung=o)
+        check(f"servo {o:4.0%}", {
+            "Lamellen untereinander": max(overlap(a, b) for a, b in itertools.pairwise(lam)),
+            "Lamellen / Rahmen": max(overlap(l, rahmen) for l in lam),
+            "Lamellen / Koppelstange": max(overlap(l, stange) for l in lam),
+            "Lamellen / Servokurbel": max(overlap(l, kurbel) for l in lam),
+            "Koppelstange / Rahmen": overlap(stange, rahmen),
+            "Koppelstange / Servokurbel": overlap(stange, kurbel),
+            "Servokurbel / Rahmen": overlap(kurbel, rahmen),
+            "Servokurbel / Haube": overlap(kurbel, haube),
+            "Servokurbel / Servo": overlap(kurbel, servo)})
+    # Gegenprobe: Lamellen weiter zu als winkel_zu müssen kollidieren
+    a, b = (m("einbau_lamelle", oeffnung=-0.14, nr=i) for i in range(2))
+    report(overlap(a, b) > 1, "servo: Gegenprobe – zu weit geschlossene Lamellen stoßen aneinander")
+
+
+def check_schnecke(m: Model) -> None:
+    n = m.n_lamellen()
+    rahmen, deckel = m("einbau_rahmen"), m("einbau_deckel")
+    motor, elektronik = m("ref_motor"), m("ref_elektronik")
+    check("schnecke", {"Motor / Rahmen": overlap(motor, rahmen),
+                       "Akku, AS5600, Platinen / Rahmen": overlap(elektronik, rahmen),
+                       "Motor / Elektronik": overlap(motor, elektronik),
+                       "Deckel / Rahmen": overlap(deckel, rahmen),
+                       "Deckel / Elektronik": overlap(deckel, elektronik)})
+    for o in STEPS:
+        lam = [m("einbau_lamelle", oeffnung=o, nr=i) for i in range(n)]
+        stange = m("einbau_koppelstange", oeffnung=o)
+        kupplung, halter = m("einbau_kupplung", oeffnung=o), m("einbau_magnethalter", oeffnung=o)
+        check(f"schnecke {o:4.0%}", {
+            "Lamellen untereinander": max(overlap(a, b) for a, b in itertools.pairwise(lam)),
+            "Lamellen / Rahmen": max(overlap(l, rahmen) for l in lam),
+            "Lamellen / Koppelstange": max(overlap(l, stange) for l in lam),
+            "Lamellen / Kupplung": max(overlap(l, kupplung) for l in lam),
+            "Lamellen / Magnethalter": max(overlap(l, halter) for l in lam),
+            "Koppelstange / Rahmen": overlap(stange, rahmen),
+            "Kupplung / Rahmen": overlap(kupplung, rahmen),
+            "Kupplung / Motorwelle": overlap(kupplung, m("ref_motor", oeffnung=o)),
+            "Magnethalter / Rahmen": overlap(halter, rahmen),
+            "Magnethalter / Magnet": overlap(halter, elektronik)})
+    # Gegenprobe: Koppelstange in Stellung „zu“, Lamellen halb offen
+    stange = m("einbau_koppelstange", oeffnung=0)
+    lam = m("einbau_lamelle", oeffnung=0.5, nr=0)
+    report(overlap(stange, lam) > 1, "schnecke: Gegenprobe – falsch stehende Koppelstange stößt an die Kurbel")
 
 
 def main() -> None:
-    n = n_lamellen()
+    varianten = sys.argv[1:] or ["servo", "schnecke"]
     with tempfile.TemporaryDirectory() as tmp:
-        tmp = Path(tmp)
-        rahmen = render(tmp, "einbau_rahmen")
-        haube = render(tmp, "einbau_haube")
-        servo = render(tmp, "ref_servo")
-        elektronik = render(tmp, "ref_elektronik")
-        report(overlap(haube, servo) < LIMIT, "Servo hängt frei in der Haube")
-        report(overlap(haube, elektronik) < LIMIT, "Akku, Platine und XIAO passen in die Haube")
-        report(overlap(rahmen, servo) < LIMIT, "Servo berührt die Blende nicht")
-
-        for o in [0, 0.25, 0.5, 0.75, 1]:
-            lam = [render(tmp, "einbau_lamelle", oeffnung=o, nr=i) for i in range(n)]
-            stange = render(tmp, "einbau_koppelstange", oeffnung=o)
-            kurbel = render(tmp, "einbau_kurbel", oeffnung=o)
-            pairs = {"Lamellen untereinander": max(overlap(a, b) for a, b in itertools.pairwise(lam)),
-                     "Lamellen / Rahmen": max(overlap(l, rahmen) for l in lam),
-                     "Lamellen / Koppelstange": max(overlap(l, stange) for l in lam),
-                     "Lamellen / Servokurbel": max(overlap(l, kurbel) for l in lam),
-                     "Koppelstange / Rahmen": overlap(stange, rahmen),
-                     "Koppelstange / Servokurbel": overlap(stange, kurbel),
-                     "Servokurbel / Rahmen": overlap(kurbel, rahmen),
-                     "Servokurbel / Haube": overlap(kurbel, haube),
-                     "Servokurbel / Servo": overlap(kurbel, servo)}
-            for name, vol in pairs.items():
-                report(vol < LIMIT, f"Öffnung {o:4.0%}: {name} ({vol:.2f} mm³)")
-
-        # Gegenprobe: Lamellen 10° weiter zu als winkel_zu müssen kollidieren
-        a, b = (render(tmp, "einbau_lamelle", oeffnung=-0.14, nr=i) for i in range(2))
-        report(overlap(a, b) > 1, "Gegenprobe: zu weit geschlossene Lamellen stoßen aneinander")
+        for v in varianten:
+            {"servo": check_servo, "schnecke": check_schnecke}[v](Model(SCAD[v], Path(tmp)))
     sys.exit(1 if failures else 0)
 
 

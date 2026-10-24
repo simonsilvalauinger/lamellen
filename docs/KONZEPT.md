@@ -50,6 +50,11 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 > (`hardware/lamellengitter.scad`, siehe `hardware/GITTER.md`). Es klemmt wie das alte im
 > Schacht, die Lamellen hängen über Kurbeln an einer Koppelstange in einer Seitentasche, und
 > Servo, Akku und XIAO sitzen in einer Haube auf dem linken Blendenrand.
+>
+> **Variante „schnecke“** (`hardware/lamellengitter_schnecke.scad`, `hardware/GITTER_SCHNECKE.md`):
+> flach, Akku und Elektronik in einer gedämmten Kammer im Schacht, N20-Schneckengetriebemotor
+> mit DRV8833 und AS5600 (wie unten in der Tabelle vorgesehen, aber mit absolutem Winkel an
+> einer Lamelle statt Umdrehungszähler). Lamellen ohne Überlappung, 0–90°.
 
 ### Kopplung an die Flügelmutter
 

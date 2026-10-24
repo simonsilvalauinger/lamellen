@@ -9,6 +9,10 @@ description  = "Akku-Knoten am Lüftungsgitter: Servo + ESP-NOW + Deep-Sleep (XI
 name = "lamellen-node"
 path = "./src/main.rs"
 
+[features]
+# Schneckengetriebemotor (DRV8833) mit AS5600 statt Servo, siehe hardware/GITTER.md
+schnecke = []
+
 [dependencies]
 lamellen-protocol = { path = "../protocol" }
 

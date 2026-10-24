@@ -9,6 +9,10 @@ ein paar kleine Schrauben. Elektronik und Firmware bleiben unverändert.
 
 Modell: [`lamellengitter.scad`](lamellengitter.scad) (OpenSCAD, parametrisch).
 
+> **Variante „schnecke“:** flach, ohne Haube, Elektronik in einer gedämmten Kammer im Schacht,
+> selbsthemmender Schneckenmotor und gemessene Stellung (AS5600). Siehe
+> [`GITTER_SCHNECKE.md`](GITTER_SCHNECKE.md).
+
 ## Aufbau
 
 ```
@@ -109,7 +113,7 @@ zum Verziehen.
 ### Prüfung
 
 ```sh
-.venv/bin/python tools/check_gitter.py
+.venv/bin/python tools/check_gitter.py servo   # ohne Argument: beide Varianten
 ```
 
 rendert alle Teile in Einbaulage bei 0, 25, 50, 75 und 100 % Öffnung und prüft, dass sich nichts

@@ -10,8 +10,10 @@ Rahmenrand. Nur der Servoturm am Knopf ist hoch, Akku und Elektronik liegen flac
 ![Variante stirn](vorschau_stirn.png)
 
 > **Alternative:** Statt des Aktors gibt es ein komplett gedrucktes, steuerbares
-> Lamellengitter, das das Edelstahlgitter ersetzt (gleiche Elektronik und Firmware, nichts
-> ragt über den Rand). Siehe [`GITTER.md`](GITTER.md).
+> Lamellengitter, das das Edelstahlgitter ersetzt, in zwei Varianten:
+> mit Servo in einer Haube (gleiche Elektronik und Firmware, [`GITTER.md`](GITTER.md)) oder
+> flach mit Schneckenmotor und Elektronik in einer gedämmten Kammer im Schacht
+> ([`GITTER_SCHNECKE.md`](GITTER_SCHNECKE.md)).
 
 ## Dateien für Bambu Studio und Onshape
 

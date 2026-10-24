@@ -44,6 +44,8 @@ impl StatusFlags {
     pub const BATTERY_LOW: u8 = 1 << 2;
     /// Erster Start nach Reset/Flashen (kein Deep-Sleep-Wake).
     pub const COLD_BOOT: u8 = 1 << 3;
+    /// Antrieb gestört: Winkelsensor ohne Magnet oder Motor blockiert (Variante „schnecke“).
+    pub const DRIVE_FAULT: u8 = 1 << 4;
 
     pub const fn contains(self, flag: u8) -> bool {
         self.0 & flag != 0

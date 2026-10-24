@@ -2,10 +2,15 @@
 //!
 //! ```sh
 //! LAMELLE_ROOM=kueche LAMELLE_CLOSED_US=1150 LAMELLE_OPEN_US=1850 cargo run --release
+//! # Variante „schnecke“ (Schneckenmotor + AS5600):
+//! LAMELLE_ROOM=kueche LAMELLE_CLOSED_RAW=3510 cargo run --release --features schnecke
 //! ```
 
 use lamellen_protocol::Room;
 use lamellen_protocol::logic::NodeConfig;
+#[cfg(feature = "schnecke")]
+use lamellen_protocol::motor::{AngleCalibration, MotorConfig};
+#[cfg(not(feature = "schnecke"))]
 use lamellen_protocol::servo::ServoCalibration;
 
 pub const ROOM: Room = match Room::from_slug(or(option_env!("LAMELLE_ROOM"), "schlafzimmer")) {
@@ -17,20 +22,49 @@ pub const ROOM: Room = match Room::from_slug(or(option_env!("LAMELLE_ROOM"), "sc
 /// Der Knopf dreht 180°. Standard passt zur Variante „direkt“ (MG90S, 180°
 /// bei etwa 500–2500 µs), mit etwas Abstand zu den Servo-Endlagen.
 /// Variante „getriebe“ (270°-Servo, 1:1,5) braucht etwa 830 / 2170 µs.
+#[cfg(not(feature = "schnecke"))]
 pub const SERVO: ServoCalibration = ServoCalibration {
     closed_us: parse_u16(or(option_env!("LAMELLE_CLOSED_US"), "600")),
     open_us: parse_u16(or(option_env!("LAMELLE_OPEN_US"), "2400")),
 };
 
+/// Rohwinkel des AS5600 bei „zu“ (Lamellen flach) und „offen“ (90°), mit dem
+/// Kalibriermodus ablesen. Ohne `LAMELLE_OPEN_RAW` liegt „offen“ eine
+/// Vierteldrehung weiter; so zählt der AS5600, wenn DIR an GND liegt und der
+/// Chip zum Magneten zeigt.
+#[cfg(feature = "schnecke")]
+pub const ANGLE: AngleCalibration = {
+    let closed_raw = parse_u16(or(option_env!("LAMELLE_CLOSED_RAW"), "0"));
+    assert!(closed_raw < 4096, "LAMELLE_CLOSED_RAW muss kleiner als 4096 sein");
+    let open_raw = match option_env!("LAMELLE_OPEN_RAW") {
+        Some(v) => parse_u16(v),
+        None => (closed_raw + 1024) % 4096,
+    };
+    assert!(open_raw < 4096, "LAMELLE_OPEN_RAW muss kleiner als 4096 sein");
+    AngleCalibration { closed_raw, open_raw }
+};
+
+#[cfg(feature = "schnecke")]
+pub const MOTOR: MotorConfig = MotorConfig::DEFAULT;
+
+/// `LAMELLE_KALIBRIEREN=1`: kein Funk, kein Schlaf, Rohwinkel laufend ausgeben
+/// und den Motor über die BOOT-Taste fahren.
+#[cfg(feature = "schnecke")]
+pub const KALIBRIEREN: bool = option_env!("LAMELLE_KALIBRIEREN").is_some();
+
 pub const NODE: NodeConfig = NodeConfig::DEFAULT;
 
 /// Prozentpunkte pro Rampenschritt und Pause dazwischen. Ein voller Hub
 /// dauert damit etwa 2 s, das ist leise und schont das Getriebe.
+#[cfg(not(feature = "schnecke"))]
 pub const RAMP_STEP: u8 = 2;
+#[cfg(not(feature = "schnecke"))]
 pub const RAMP_STEP_MS: u64 = 40;
 /// Wartezeit in der Endlage, bevor der Servo stromlos wird.
+#[cfg(not(feature = "schnecke"))]
 pub const SETTLE_MS: u64 = 300;
 /// Anlaufzeit des 5-V-Wandlers.
+#[cfg(not(feature = "schnecke"))]
 pub const BOOST_STARTUP_MS: u64 = 20;
 /// So lange wartet der Knoten auf die Antwort des Gateways.
 pub const REPLY_TIMEOUT_MS: u64 = 60;

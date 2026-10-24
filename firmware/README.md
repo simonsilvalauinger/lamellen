@@ -29,6 +29,26 @@ cd node
 LAMELLE_ROOM=schlafzimmer LAMELLE_CLOSED_US=600 LAMELLE_OPEN_US=2400 cargo run --release
 ```
 
+### Variante „schnecke“ (Schneckenmotor + AS5600)
+
+Für das gedruckte Gitter mit Schneckengetriebemotor (`hardware/GITTER_SCHNECKE.md`) mit dem
+Feature `schnecke` bauen. Statt der Servo-Pulse bekommt der Knoten die Rohwinkel des AS5600
+in den Endlagen:
+
+```sh
+LAMELLE_KALIBRIEREN=1 cargo run --release --features schnecke   # Rohwinkel ablesen, BOOT fährt den Motor
+LAMELLE_ROOM=schlafzimmer LAMELLE_CLOSED_RAW=3510 LAMELLE_OPEN_RAW=438 cargo run --release --features schnecke
+```
+
+- Ohne `LAMELLE_OPEN_RAW` liegt „offen“ 1024 Schritte (90°) hinter „zu“.
+- Der Knoten misst die Stellung bei jedem Aufwachen und meldet sie. Er fährt mit voller
+  Leistung, ab 7° vor dem Ziel langsamer, und bremst im Totband (±0,7°). Danach ist der Motor
+  stromlos, die Schnecke hält.
+- Die Motorpolung lernt er bei der ersten Fahrt und merkt sie sich im RTC-Speicher.
+- Ohne Magnet, ohne Antwort des Sensors, bei Blockade (0,4 s ohne Bewegung) oder nach 6 s
+  bricht er ab und setzt `DRIVE_FAULT` im Status.
+- Regelung und Kalibrierung stehen hardwarefrei in `protocol/src/motor.rs` (getestet).
+
 Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeitszimmer`,
 `kinderzimmer`, `badezimmer`.
 

@@ -7,6 +7,7 @@
 
 pub mod logic;
 pub mod message;
+pub mod motor;
 pub mod room;
 pub mod servo;
 
