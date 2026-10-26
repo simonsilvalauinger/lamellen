@@ -52,7 +52,10 @@ pub const MOTOR: MotorConfig = MotorConfig::DEFAULT;
 #[cfg(feature = "schnecke")]
 pub const KALIBRIEREN: bool = option_env!("LAMELLE_KALIBRIEREN").is_some();
 
+#[cfg(not(feature = "netz"))]
 pub const NODE: NodeConfig = NodeConfig::DEFAULT;
+#[cfg(feature = "netz")]
+pub const NODE: NodeConfig = NodeConfig::NETZ;
 
 /// Prozentpunkte pro Rampenschritt und Pause dazwischen. Ein voller Hub
 /// dauert damit etwa 2 s, das ist leise und schont das Getriebe.
@@ -69,7 +72,11 @@ pub const BOOST_STARTUP_MS: u64 = 20;
 /// So lange wartet der Knoten auf die Antwort des Gateways.
 pub const REPLY_TIMEOUT_MS: u64 = 60;
 /// Akku-Spannungsteiler (2 × 1 MΩ): U_Akku = U_ADC × 2.
+#[cfg(not(feature = "netz"))]
 pub const BATTERY_DIVIDER: u16 = 2;
+/// Kabel: Teiler 100 kΩ/10 kΩ von 12 V auf D0, U = U_ADC × 11.
+#[cfg(feature = "netz")]
+pub const BATTERY_DIVIDER: u16 = 11;
 
 const fn or(value: Option<&'static str>, default: &'static str) -> &'static str {
     match value {

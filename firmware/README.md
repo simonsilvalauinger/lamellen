@@ -49,6 +49,20 @@ LAMELLE_ROOM=schlafzimmer LAMELLE_CLOSED_RAW=3510 LAMELLE_OPEN_RAW=438 cargo run
   bricht er ab und setzt `DRIVE_FAULT` im Status.
 - Regelung und Kalibrierung stehen hardwarefrei in `protocol/src/motor.rs` (getestet).
 
+### Versorgung über Kabel (`netz`)
+
+Für Gitter, die über ein 12-V-Kabel durch den Schacht versorgt werden
+(`hardware/GITTER_SCHNECKE.md`, Abschnitt „Versorgung über Kabel“):
+
+```sh
+LAMELLE_ROOM=kueche LAMELLE_CLOSED_RAW=3510 cargo run --release --features schnecke,netz
+```
+
+- `NodeConfig::NETZ`: keine Akkugrenzen, Takt 60 s, Fail-Safe weiterhin nach 3 h ohne Gateway.
+- D0 misst über 100 kΩ/10 kΩ die 12 V (Teiler 11). Der Wert steht in `battery_mv`, das
+  Statusbit `MAINS_POWERED` ist gesetzt.
+- Mit der Servo-Variante kombinierbar (`--features netz`); der Servo hängt dann über den P-MOSFET am 5-V-Wandler, der Aufwärtswandler entfällt.
+
 Gültige Räume: `wohnzimmer`, `kueche`, `schlafzimmer`, `spielzimmer`, `arbeitszimmer`,
 `kinderzimmer`, `badezimmer`.
 

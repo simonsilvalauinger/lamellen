@@ -5,10 +5,11 @@ Rendert die Teile in Einbaulage über den ganzen Hub (zu → offen) und prüft, 
 sich keine zwei Teile durchdringen. Eine Gegenprobe muss anschlagen, sonst ist
 die Prüfung blind.
 
-  servo     lamellengitter.scad           (Haube, Servo, Kulisse)
-  schnecke  lamellengitter_schnecke.scad  (Kammer im Schacht, Schneckenmotor, AS5600)
+  servo           lamellengitter.scad           (Haube, Servo, Kulisse)
+  schnecke        lamellengitter_schnecke.scad  (Kammer im Schacht, Schneckenmotor, AS5600, Akku)
+  schnecke_kabel  dasselbe mit versorgung="kabel" (WAGO-Klemmen, Zugentlastung)
 
-Aufruf:  python3 tools/check_gitter.py [servo|schnecke ...]   (Standard: beide;
+Aufruf:  python3 tools/check_gitter.py [servo|schnecke|schnecke_kabel ...]   (Standard: alle;
          Exit-Code 1 bei Fehlern)
 """
 
@@ -22,7 +23,9 @@ from pathlib import Path
 import trimesh
 
 HERE = Path(__file__).resolve().parent.parent
-SCAD = {"servo": HERE / "lamellengitter.scad", "schnecke": HERE / "lamellengitter_schnecke.scad"}
+SCAD = {"servo": HERE / "lamellengitter.scad", "schnecke": HERE / "lamellengitter_schnecke.scad",
+        "schnecke_kabel": HERE / "lamellengitter_schnecke.scad"}
+DEFINES = {"schnecke_kabel": {"versorgung": '"kabel"'}}
 STEPS = [0, 0.25, 0.5, 0.75, 1]
 LIMIT = 0.5   # mm³, Rundungsreste der Facettierung
 failures = 0
@@ -35,12 +38,14 @@ def report(ok: bool, text: str) -> None:
 
 
 class Model:
-    def __init__(self, scad: Path, tmp: Path):
-        self.scad, self.tmp = scad, tmp
+    def __init__(self, name: str, tmp: Path):
+        self.name, self.scad, self.tmp = name, SCAD[name], tmp
+        self.fixed = DEFINES.get(name, {})
 
     def __call__(self, part: str, **defs) -> trimesh.Trimesh:
-        name = self.scad.stem + "_" + part + "".join(f"_{k}{v}" for k, v in defs.items())
-        out = self.tmp / f"{name}.stl"
+        defs = {**self.fixed, **defs}
+        name = self.name + "_" + part + "".join(f"_{k}{v}" for k, v in defs.items())
+        out = self.tmp / f"{name.replace('"', '')}.stl"
         if not out.exists():
             args = ["openscad", "-D", f'part="{part}"']
             for k, v in defs.items():
@@ -49,8 +54,10 @@ class Model:
         return trimesh.load_mesh(out)
 
     def n_lamellen(self) -> int:
-        result = subprocess.run(["openscad", "-D", 'part="ref_schacht"', "-o", str(self.tmp / "n.stl"),
-                                 str(self.scad)], capture_output=True, text=True)
+        args = ["openscad", "-D", 'part="ref_schacht"']
+        for k, v in self.fixed.items():
+            args += ["-D", f"{k}={v}"]
+        result = subprocess.run(args + ["-o", str(self.tmp / "n.stl"), str(self.scad)], capture_output=True, text=True)
         return int(re.search(r"(\d+) Lamellen", result.stderr).group(1))
 
 
@@ -93,18 +100,25 @@ def check_servo(m: Model) -> None:
 
 def check_schnecke(m: Model) -> None:
     n = m.n_lamellen()
+    v = m.name
     rahmen, deckel = m("einbau_rahmen"), m("einbau_deckel")
     motor, elektronik = m("ref_motor"), m("ref_elektronik")
-    check("schnecke", {"Motor / Rahmen": overlap(motor, rahmen),
-                       "Akku, AS5600, Platinen / Rahmen": overlap(elektronik, rahmen),
-                       "Motor / Elektronik": overlap(motor, elektronik),
-                       "Deckel / Rahmen": overlap(deckel, rahmen),
-                       "Deckel / Elektronik": overlap(deckel, elektronik)})
+    pairs = {"Motor / Rahmen": overlap(motor, rahmen),
+             "Akku bzw. WAGO, AS5600, Platinen / Rahmen": overlap(elektronik, rahmen),
+             "Motor / Elektronik": overlap(motor, elektronik),
+             "Deckel / Rahmen": overlap(deckel, rahmen),
+             "Deckel / Elektronik": overlap(deckel, elektronik)}
+    if v == "schnecke_kabel":
+        buegel = m("einbau_klemmbuegel")
+        pairs |= {"Klemmbügel / Rahmen": overlap(buegel, rahmen),
+                  "Klemmbügel / Elektronik": overlap(buegel, elektronik),
+                  "Klemmbügel / Deckel": overlap(buegel, deckel)}
+    check(v, pairs)
     for o in STEPS:
         lam = [m("einbau_lamelle", oeffnung=o, nr=i) for i in range(n)]
         stange = m("einbau_koppelstange", oeffnung=o)
         kupplung, halter = m("einbau_kupplung", oeffnung=o), m("einbau_magnethalter", oeffnung=o)
-        check(f"schnecke {o:4.0%}", {
+        check(f"{v} {o:4.0%}", {
             "Lamellen untereinander": max(overlap(a, b) for a, b in itertools.pairwise(lam)),
             "Lamellen / Rahmen": max(overlap(l, rahmen) for l in lam),
             "Lamellen / Koppelstange": max(overlap(l, stange) for l in lam),
@@ -118,14 +132,15 @@ def check_schnecke(m: Model) -> None:
     # Gegenprobe: Koppelstange in Stellung „zu“, Lamellen halb offen
     stange = m("einbau_koppelstange", oeffnung=0)
     lam = m("einbau_lamelle", oeffnung=0.5, nr=0)
-    report(overlap(stange, lam) > 1, "schnecke: Gegenprobe – falsch stehende Koppelstange stößt an die Kurbel")
+    report(overlap(stange, lam) > 1, f"{v}: Gegenprobe – falsch stehende Koppelstange stößt an die Kurbel")
 
 
 def main() -> None:
-    varianten = sys.argv[1:] or ["servo", "schnecke"]
+    varianten = sys.argv[1:] or ["servo", "schnecke", "schnecke_kabel"]
     with tempfile.TemporaryDirectory() as tmp:
         for v in varianten:
-            {"servo": check_servo, "schnecke": check_schnecke}[v](Model(SCAD[v], Path(tmp)))
+            {"servo": check_servo, "schnecke": check_schnecke,
+             "schnecke_kabel": check_schnecke}[v](Model(v, Path(tmp)))
     sys.exit(1 if failures else 0)
 
 

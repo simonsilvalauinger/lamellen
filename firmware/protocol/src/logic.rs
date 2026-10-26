@@ -35,6 +35,18 @@ impl NodeConfig {
         max_sleep_s: 3600,
         critical_sleep_s: 6 * 3600,
     };
+
+    /// Versorgung über Kabel (12 V durch den Schacht): keine Akkugrenzen, kürzerer
+    /// Takt. Der Fail-Safe greift wie bei `DEFAULT` nach 3 h ohne Gateway.
+    pub const NETZ: NodeConfig = NodeConfig {
+        battery_low_mv: 0,
+        battery_critical_mv: 0,
+        default_sleep_s: 60,
+        min_sleep_s: 5,
+        // Ohne Antwort schläft der Knoten immer default_sleep_s: 180 × 60 s = 3 h ohne Gateway.
+        fail_safe_after_misses: 180,
+        ..NodeConfig::DEFAULT
+    };
 }
 
 /// Zustand, der den Deep-Sleep überlebt.
@@ -195,6 +207,24 @@ mod tests {
         assert!(plan.battery_critical);
         assert_eq!(plan.target, 100);
         assert_eq!(plan.sleep_s, CFG.critical_sleep_s);
+    }
+
+    #[test]
+    fn mains_config_ignores_battery_but_keeps_fail_safe() {
+        let cfg = NodeConfig::NETZ;
+        let mut mem = NodeMemory::initial(&cfg);
+        // 0 mV: Teiler nicht bestückt oder Spannung zu klein – darf nichts auslösen
+        let plan = decide(&mut mem, Some(&cmd(20, 15, 300)), 0, &cfg);
+        assert!(!plan.battery_critical);
+        assert_eq!(plan.target, 20);
+
+        let mut plan = plan;
+        while mem.misses < cfg.fail_safe_after_misses {
+            plan = decide(&mut mem, None, 12_000, &cfg);
+        }
+        assert!(plan.fail_safe);
+        assert_eq!(plan.target, 100);
+        assert_eq!(u32::from(cfg.fail_safe_after_misses) * u32::from(cfg.default_sleep_s), 3 * 3600);
     }
 
     #[test]

@@ -55,6 +55,8 @@ Weil jetzt alle 7 Auslässe zugehen können, muss das an drei Stellen abgesicher
 > flach, Akku und Elektronik in einer gedämmten Kammer im Schacht, N20-Schneckengetriebemotor
 > mit DRV8833 und AS5600 (wie unten in der Tabelle vorgesehen, aber mit absolutem Winkel an
 > einer Lamelle statt Umdrehungszähler). Lamellen ohne Überlappung, 0–90°.
+> Statt des Akkus kann sie ein 12-V-Kabel durch den Schacht versorgen, das von Gitter zu
+> Gitter durchgeschleift wird (`versorgung = "kabel"`, Firmware-Feature `netz`).
 
 ### Kopplung an die Flügelmutter
 

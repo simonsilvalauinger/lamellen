@@ -27,6 +27,7 @@ oeffnung   = 1;      // nur für die Ansicht: 0 = zu, 1 = offen
 nr         = 0;      // einzelne Lamelle für "einbau_lamelle" (Kollisionsprüfung)
 show_deckel = true;
 show_rahmen = true;
+versorgung = "akku"; // "akku" (18650) oder "kabel" (12 V durch den Schacht, durchgeschleift)
 
 /* [Schacht – vor dem Druck messen] */
 schacht_w = 180;    // lichte Breite der Wandöffnung (Annahme, MESSEN)
@@ -46,7 +47,8 @@ klemm_l   = 20;
 klemm_ueber = 0.8;
 
 /* [Kammer und Dämmung] */
-kammer_b  = 21;     // lichte Breite der Kammer (18650 + Luft)
+// lichte Breite der Kammer: 18650 + Luft bzw. WAGO 221-413 mit dem Hebel zum Deckel
+kammer_b  = versorgung == "kabel" ? 19.5 : 21;
 dw        = 1.2;    // Wände der Doppelwand
 luft      = 2.5;    // Luftschicht in der Doppelwand (hinten und zur Schachtwand)
 spalt     = 6;      // Luftspalt zwischen Kammer und Lagerwand (Kupplung, Magnethalter)
@@ -95,6 +97,12 @@ xiao      = [21.5, 17.8];
 board_len = 24;
 drv       = [18.5, 16];
 fit       = 0.3;
+
+/* [Kabelversorgung (versorgung = "kabel")] */
+kabel_d   = 5;      // Außendurchmesser eines Kabels (2 × 0,5 mm², MESSEN)
+kabel_quetsch = 0.8; // so stark drückt der Klemmbügel das Kabel zusammen
+wago      = [20.2, 18.6, 8.5];  // WAGO 221-413: Länge (Einführung bis Ende), Breite, Dicke – MESSEN
+wandler   = [17.2, 11.2];       // 12 → 5 V, z. B. Mini-360
 
 $fn = 48;
 
@@ -150,6 +158,9 @@ x_mitte = (x_k0 + x_k1) / 2;
 x_as1   = x_k1 - as_chip;
 x_as0   = x_as1 - as_t;
 
+kabel   = versorgung == "kabel";
+assert(kabel || versorgung == "akku", "versorgung muss \"akku\" oder \"kabel\" sein");
+
 // Akku liegt hinten, XIAO und Lochraster hängen am Deckel davor, der DRV8833 vor dem Motor
 akku_y0 = y_j + as_b / 2 + 4;
 akku_y1 = akku_y0 + akku_dim[0];
@@ -159,12 +170,29 @@ board_y0 = akku_y0 + 3;
 dom_unten = [x_mitte, yb + 3];   // Dome stehen in den Stirnwänden
 dom_oben  = [x_mitte, yt - 3];
 
+// Kabel: beide Kabel (ein, weiter) kommen nebeneinander durch ein Langloch hinten, knicken
+// nach oben ab und liegen unter dem Klemmbügel auf zwei Querrippen (Wellenprofil). Oben
+// in der Kammer liegen die beiden WAGO-Klemmen übereinander, Einführung nach unten.
+k_y     = y_j + as_b / 2 + fit + 1.5 + 1 + kabel_d / 2 + 1;   // Mitte Langloch
+k_dx    = kabel_d / 2 + 0.3;                                   // Kabelmitten ± k_dx
+k_c     = k_y + kabel_d / 2 + 9;                               // Mitte Klemmbügel
+kb_b    = 8;                                                   // Breite Klemmbügel (y)
+kb_t    = 3;
+rippe_h = 1.2;
+z_kb0   = z_kr + kabel_d - kabel_quetsch;                      // Unterseite Klemmbügel
+kd_x    = [x_k0 + 1.6, x_k1 - 1.6];                           // Dome des Klemmbügels (0,6 mm in der Wand)
+w_y1    = dom_oben[1] - 3.25 - 0.5;                            // WAGO-Tasche oben
+w_y0    = w_y1 - wago[0] - 2 * fit;
+w_z1    = z_kr + 2 * wago[2] + 2 * fit;                        // beide Klemmen übereinander
+wd_y0   = board_y0 + xiao[0] + 2 + board_len + 2;              // Wandler am Deckel
+
+
 xL      = -schacht_w / 2 - rand;
 yB      = -schacht_h / 2 - rand;
 
 function oeffnungswinkel(o) = winkel_zu + o * (winkel_auf - winkel_zu);
 
-echo(str("Lamellengitter (schnecke): ", schacht_w + 2 * rand, " × ", schacht_h + 2 * rand, " mm, ",
+echo(str("Lamellengitter (schnecke, ", versorgung, "): ", schacht_w + 2 * rand, " × ", schacht_h + 2 * rand, " mm, ",
          n_lam, " Lamellen à ", x_lam1 - x_lam0, " mm, Luftkanal ", x_rbw0 - x_bw1, " mm breit, ",
          "Kammer ", kammer_b, " × ", yt - yb, " × ", -z_kr, " mm"));
 
@@ -174,15 +202,20 @@ assert(sehne <= teilung - 0.8, "Lamellen stoßen in Stellung zu aneinander – s
 assert(achse_z + sehne / 2 <= -1, "offene Lamellen ragen aus der Wand");
 assert(-(achse_z - sehne / 2) + 1 <= einschub, "offene Lamellen ragen hinten aus dem Einschub");
 assert(achse_z + kurbel_r + stange_h / 2 <= -1, "Koppelstange stößt an die Blende");
-assert(akku_dim[1] + 2 * fit <= kammer_b, "Akku zu dick für die Kammer");
-assert(akku_dim[1] + 2 * fit <= -z_kr, "Akku zu dick für die Kammertiefe");
+assert(kabel || akku_dim[1] + 2 * fit <= kammer_b, "Akku zu dick für die Kammer");
+assert(kabel || akku_dim[1] + 2 * fit <= -z_kr, "Akku zu dick für die Kammertiefe");
 assert(achse_z - as_b / 2 >= z_kr && achse_z + as_b / 2 <= 0, "AS5600-Modul passt nicht in die Kammertiefe");
 assert(x_gf <= x_k1 - 0.5, "Motorwelle zu kurz: Getriebe stößt an die Kammerwand");
 assert(x_gf - getr_h >= x_k0, "Getriebe zu dick für die Kammer");
 assert(m_y0 - 2.5 >= yb, "Motor stößt unten an die Kammer – antrieb_nr höher legen");
 assert(g_y1 + 2.5 < y_j - as_b / 2 - 1.5, "Motor stößt an den AS5600");
-assert(akku_y1 + 2 < dom_oben[1] - 3.5, "Akku passt nicht in die Kammer");
-assert(board_y0 + xiao[0] + board_len + 2 < akku_y1, "Platinen passen nicht vor den Akku");
+assert(kabel || akku_y1 + 2 < dom_oben[1] - 3.5, "Akku passt nicht in die Kammer");
+assert(kabel || board_y0 + xiao[0] + board_len + 2 < akku_y1, "Platinen passen nicht vor den Akku");
+assert(!kabel || wago[1] + 2 * fit <= kammer_b, "WAGO-Klemme zu breit für die Kammer – kammer_b erhöhen");
+assert(!kabel || w_z1 < blende_t - 4 - 1, "WAGO-Klemmen stoßen an die Platinen am Deckel");
+assert(!kabel || 2 * kabel_d + 0.6 + 2 * 4.4 <= kammer_b, "zwei Kabel und die Dome des Klemmbügels passen nicht nebeneinander");
+assert(!kabel || k_c + kb_b / 2 + 12 < w_y0, "zu wenig Platz zwischen Klemmbügel und WAGO-Klemmen");
+assert(!kabel || wd_y0 + wandler[0] < dom_oben[1] - 3.5, "Wandler passt nicht an den Deckel");
 assert(drv[0] < getr_l && achse_z + getr_b / 2 < blende_t - 4 - 0.5, "DRV8833 passt nicht vor den Motor");
 
 // ---------------------------------------------------------------- Hilfen
@@ -252,15 +285,36 @@ module kammer_einbauten() {
     }
     // Akkuwiegen: Akku von vorn einklipsen. Sie enden hinter den Platinen am Deckel
     // (beim Druck eine 21-mm-Brücke).
-    for (y = [akku_y0 + 6, akku_y1 - 8])
+    if (!kabel) for (y = [akku_y0 + 6, akku_y1 - 8])
         difference() {
             box([x_k0 - 0.01, y, z_kr - 0.01], [x_k1 + 0.01, y + 2, akku_z + akku_dim[1] / 2 - 2]);
             translate([x_mitte, y - 1, akku_z]) rotate([-90, 0, 0]) cylinder(d = akku_dim[1] + 2 * fit, h = 4);
             box([x_mitte - 7.5, y - 1, akku_z], [x_mitte + 7.5, y + 3, zf + 1]);
         }
+    if (kabel) kabel_einbauten();
     // Schraubdome für den Deckel
     translate([dom_unten[0], dom_unten[1], -4]) cylinder(d = 6.5, h = zf + 4);
     translate([dom_oben[0], dom_oben[1], -10]) cylinder(d = 6.5, h = zf + 10);
+}
+
+// Zugentlastung und WAGO-Tasche (versorgung = "kabel")
+module kabel_einbauten() {
+    // Hülse um das Langloch in der Luftschicht der Doppelwand
+    translate([0, 0, -einschub + dw - 0.01]) linear_extrude(luft + 0.02) kabel_loch_2d(1.2);
+    // Querrippen unter dem Klemmbügel (das Kabel liegt darüber im Wellenprofil)
+    for (dy = [-kb_b / 2 + 0.5, kb_b / 2 - 1.7])
+        box([x_k0 - 0.01, k_c + dy, z_kr - 0.01], [x_k1 + 0.01, k_c + dy + 1.2, z_kr + rippe_h]);
+    // Dome des Klemmbügels an den Seitenwänden. Beim Druck ist ihre Auflage ein Überhang
+    // von knapp 4 mm, das geht ohne Stützen.
+    for (x = kd_x) translate([x, k_c, z_kr - 0.01]) cylinder(d = 4.4, h = z_kb0 - z_kr + 0.01);
+    // WAGO-Tasche: Anschlag oben über die ganze Breite, unten nur an den Ecken (dort
+    // laufen die Leiter in die Klemmen)
+    box([x_k0 - 0.01, w_y1, z_kr - 0.01], [x_k1 + 0.01, w_y1 + 1.5, w_z1]);
+    for (x = [[x_k0 - 0.01, x_k0 + 2], [x_k1 - 2, x_k1 + 0.01]])
+        box([x[0], w_y0 - 1.5, z_kr - 0.01], [x[1], w_y0, w_z1]);
+}
+module kabel_loch_2d(extra = 0) {
+    hull() for (dx = [-k_dx, k_dx]) translate([x_mitte + dx, k_y]) circle(d = kabel_d + 0.6 + 2 * extra);
 }
 
 module rahmen() {
@@ -298,6 +352,11 @@ module rahmen() {
         for (k = [0 : klemm_n - 1], oben = [true, false]) federzunge(klemm_x(k), oben);
         // Motorwelle durch die Kammerwand
         yz_extrude(x_gf - 0.1, x_kw1 + 0.1) translate([y_k, achse_z]) circle(d = welle_d + 1);
+        // Kabel: Langloch durch die Doppelwand, Gewinde der Klemmbügel-Dome
+        if (kabel) {
+            translate([0, 0, -einschub - 1]) linear_extrude(einschub + z_kr + 1.5) kabel_loch_2d();
+            for (x = kd_x) translate([x, k_c, z_kb0 - 8]) cylinder(d = 1.8, h = 8.1);
+        }
         // Gewinde der Deckelschrauben (M2)
         for (d = [dom_unten, dom_oben]) translate([d[0], d[1], -4]) cylinder(d = 1.8, h = blende_t + 5);
     }
@@ -311,6 +370,21 @@ module deckel() {
             cylinder(d = 2.4, h = deckel_t + 1);
             translate([0, 0, deckel_t - 1.2 + 0.02]) cylinder(d1 = 2.4, d2 = 4.4, h = 1.2);
         }
+    }
+}
+
+// ---------------------------------------------------------------- Klemmbügel
+// Liegt quer über beiden Kabeln, mit 2 × M2 × 8 von vorn in die Dome geschraubt
+module klemmbuegel() {
+    difference() {
+        intersection() {
+            hull() for (x = kd_x) translate([x, k_c, z_kb0]) cylinder(d = kb_b, h = kb_t);
+            box([x_k0 + fit, k_c - kb_b, z_kb0 - 1], [x_k1 - fit, k_c + kb_b, z_kb0 + kb_t + 1]);
+        }
+        for (x = kd_x) translate([x, k_c, z_kb0 - 1]) cylinder(d = 2.4, h = kb_t + 2);
+        // Rillen führen die Kabel
+        for (dx = [-k_dx, k_dx]) translate([x_mitte + dx - kabel_d / 2, k_c - kb_b, z_kb0 - 0.01])
+            cube([kabel_d, 2 * kb_b, 1.2]);
     }
 }
 
@@ -392,7 +466,16 @@ module motor_dummy() {
     }
 }
 module elektronik_dummy() {
-    color("dimgray") translate([x_mitte, akku_y0, akku_z]) rotate([-90, 0, 0]) cylinder(d = akku_dim[1], h = akku_dim[0]);
+    if (kabel) {
+        // WAGO-Klemmen übereinander, Kabelstücke durch das Langloch, Wandler am Deckel
+        for (i = [0, 1]) color(i == 0 ? "dimgray" : "orange")
+            box([x_mitte - wago[1] / 2, w_y0 + fit, z_kr + fit + i * (wago[2] + 0.01)],
+                [x_mitte + wago[1] / 2, w_y0 + fit + wago[0], z_kr + fit + i * (wago[2] + 0.01) + wago[2]]);
+        for (dx = [-k_dx, k_dx]) color("black")
+            translate([x_mitte + dx, k_y, -einschub - 15]) cylinder(d = kabel_d, h = einschub + 15 + z_kr + kabel_d / 2);
+        color("blue") box([x_mitte - wandler[1] / 2, wd_y0, blende_t - 4], [x_mitte + wandler[1] / 2, wd_y0 + wandler[0], blende_t - 2.4]);
+    } else
+        color("dimgray") translate([x_mitte, akku_y0, akku_z]) rotate([-90, 0, 0]) cylinder(d = akku_dim[1], h = akku_dim[0]);
     color("purple") box([x_as0, y_j - as_b / 2, achse_z - as_b / 2], [x_as1, y_j + as_b / 2, achse_z + as_b / 2]);
     // Platinen am Deckel: XIAO, Lochraster, DRV8833
     z_p = blende_t - 4;
@@ -457,6 +540,7 @@ if (part == "assembly") {
     color("gold") magnethalter_einbau(beta);
     motor_dummy();
     elektronik_dummy();
+    if (kabel) color("gold") klemmbuegel();
     if (show_deckel) color("seagreen", 0.4) deckel();
 } else if (part == "rahmen") print_rahmen();
 else if (part == "lamelle") print_lamelle(false);
@@ -465,6 +549,7 @@ else if (part == "koppelstange") print_koppelstange();
 else if (part == "kupplung") print_kupplung();
 else if (part == "magnethalter") print_magnethalter();
 else if (part == "deckel") print_deckel();
+else if (part == "klemmbuegel") rotate([180, 0, 0]) translate([0, 0, -(z_kb0 + kb_t)]) klemmbuegel();  // Rillen oben
 else if (part == "probe_einschub") print_probe_einschub();
 else if (part == "probe_lager") probe_lager();
 else if (part == "einbau_rahmen") rahmen();
@@ -474,6 +559,7 @@ else if (part == "einbau_koppelstange") koppelstange_einbau(beta);
 else if (part == "einbau_kupplung") kupplung_einbau(beta);
 else if (part == "einbau_magnethalter") magnethalter_einbau(beta);
 else if (part == "einbau_deckel") deckel();
+else if (part == "einbau_klemmbuegel") klemmbuegel();
 else if (part == "ref_motor") motor_dummy();
 else if (part == "ref_elektronik") elektronik_dummy();
 else if (part == "ref_schacht") schacht_dummy();

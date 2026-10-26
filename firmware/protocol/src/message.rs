@@ -46,6 +46,8 @@ impl StatusFlags {
     pub const COLD_BOOT: u8 = 1 << 3;
     /// Antrieb gestört: Winkelsensor ohne Magnet oder Motor blockiert (Variante „schnecke“).
     pub const DRIVE_FAULT: u8 = 1 << 4;
+    /// Versorgung über Kabel: `battery_mv` ist dann die Versorgungsspannung (12 V).
+    pub const MAINS_POWERED: u8 = 1 << 5;
 
     pub const fn contains(self, flag: u8) -> bool {
         self.0 & flag != 0

@@ -261,12 +261,16 @@ async fn main(_spawner: Spawner) -> ! {
     };
 
     let mut flags = StatusFlags::default();
+    #[cfg(feature = "netz")]
+    flags.set(StatusFlags::MAINS_POWERED);
     if drive_mem.drive_fault {
         flags.set(StatusFlags::DRIVE_FAULT);
     }
     if cold_boot {
         flags.set(StatusFlags::COLD_BOOT);
     }
+    // Kabelversorgung: keine Akkugrenzen, battery_mv ist die Versorgungsspannung
+    #[cfg(not(feature = "netz"))]
     if battery_mv < NODE.battery_low_mv {
         flags.set(StatusFlags::BATTERY_LOW);
     }

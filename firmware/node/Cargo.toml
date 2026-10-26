@@ -12,6 +12,8 @@ path = "./src/main.rs"
 [features]
 # Schneckengetriebemotor (DRV8833) mit AS5600 statt Servo, siehe hardware/GITTER.md
 schnecke = []
+# Versorgung über Kabel (12 V durch den Schacht) statt Akku, mit „schnecke“ kombinierbar
+netz = []
 
 [dependencies]
 lamellen-protocol = { path = "../protocol" }

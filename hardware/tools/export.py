@@ -14,7 +14,8 @@ Erzeugt je Variante in hardware/export/<variante>/:
 
 Die gedruckten Lamellengitter ersetzen das Edelstahlgitter als Ganzes:
 „gitter“ (lamellengitter.scad, Servo in einer Haube) und „gitter_schnecke“
-(lamellengitter_schnecke.scad, alles im Schacht). Sie landen in
+(lamellengitter_schnecke.scad, alles im Schacht), dieses auch als
+„gitter_schnecke_kabel“ mit 12-V-Versorgung durch den Schacht. Sie landen in
 hardware/export/<variante>/ und haben je Druckplatte eine eigene 3MF-Datei.
 
 Aufruf:  python3 tools/export.py [variante ...]      (Standard: stirn; „gitter“, „gitter_schnecke“)
@@ -88,6 +89,21 @@ GITTER = {
         "einbau": ["rahmen", "lamellen", "koppelstange", "kupplung", "magnethalter", "deckel"],
         "references": ["ref_motor", "ref_elektronik", "ref_schacht"],
     },
+    # Dasselbe Gitter mit 12 V durch den Schacht statt Akku
+    "gitter_schnecke_kabel": {
+        "scad": HERE / "lamellengitter_schnecke.scad",
+        "defines": {"versorgung": '"kabel"'},
+        "plates": {
+            "kabel_rahmen": [("rahmen", 1)],
+            "kabel_lamellen": [("lamelle", "n-1"), ("lamelle_antrieb", 1)],
+            "kabel_kleinteile": [("deckel", 1), ("koppelstange", 1), ("kupplung", 1), ("magnethalter", 1),
+                                 ("klemmbuegel", 1)],
+            "kabel_proben": [("probe_einschub", 1), ("probe_lager", 1)],
+        },
+        "einbau": ["rahmen", "lamellen", "koppelstange", "kupplung", "magnethalter", "deckel", "klemmbuegel"],
+        "references": ["ref_motor", "ref_elektronik", "ref_schacht"],
+        "baugruppe": "lamellengitter_schnecke_kabel_baugruppe.step",
+    },
 }
 
 # Farben in Onshape (RGB 0–1)
@@ -109,15 +125,19 @@ COLORS = {
     "magnethalter": (0.95, 0.8, 0.1),
     "deckel": (0.3, 0.6, 0.45),
     "ref_motor": (0.75, 0.75, 0.78),
+    "klemmbuegel": (0.95, 0.8, 0.1),
 }
 DEFAULT_COLOR = (0.6, 0.6, 0.6)
 
 
-def openscad(part: str, variante: str | None, out: Path, scad: Path = SCAD) -> trimesh.Trimesh | None:
+def openscad(part: str, variante: str | None, out: Path, scad: Path = SCAD,
+             defines: dict[str, str] | None = None) -> trimesh.Trimesh | None:
     """Rendert einen Teil; None, wenn er in dieser Variante leer ist."""
     args = ["openscad", "-D", f'part="{part}"']
     if variante:
         args += ["-D", f'variante="{variante}"']
+    for k, v in (defines or {}).items():
+        args += ["-D", f"{k}={v}"]
     result = subprocess.run(args + ["-o", str(out), str(scad)], capture_output=True, text=True)
     if "Current top level object is empty" in result.stderr:
         return None
@@ -230,10 +250,12 @@ def export_cadquery(variante: str) -> None:
     print(f"  {variante}: lamellen_{variante}_baugruppe.step")
 
 
-def gitter_lamellen(scad: Path, tmp: Path) -> int:
+def gitter_lamellen(scad: Path, tmp: Path, defines: dict[str, str]) -> int:
     """Anzahl der Lamellen aus der Meldung des Modells."""
-    result = subprocess.run(["openscad", "-D", 'part="ref_schacht"', "-o", str(tmp / "n.stl"), str(scad)],
-                            capture_output=True, text=True)
+    args = ["openscad", "-D", 'part="ref_schacht"']
+    for k, v in defines.items():
+        args += ["-D", f"{k}={v}"]
+    result = subprocess.run(args + ["-o", str(tmp / "n.stl"), str(scad)], capture_output=True, text=True)
     return int(result.stderr.split(" Lamellen")[0].rsplit(" ", 1)[1])
 
 
@@ -241,17 +263,18 @@ def export_gitter(variante: str) -> None:
     """Gedrucktes Lamellengitter: je Druckplatte eine 3MF, Teile als STL und STEP."""
     cfg = GITTER[variante]
     scad = cfg["scad"]
+    defines = cfg.get("defines", {})
     target = OUT / variante
     (target / "stl").mkdir(parents=True, exist_ok=True)
     (target / "step").mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
-        n = gitter_lamellen(scad, tmp)
+        n = gitter_lamellen(scad, tmp, defines)
         counts = {"n": n, "n-1": n - 1}
         for plate, parts in cfg["plates"].items():
             printed = {}
             for part, count in parts:
-                mesh = openscad(part, None, tmp / f"{part}.stl", scad)
+                mesh = openscad(part, None, tmp / f"{part}.stl", scad, defines)
                 mesh.export(target / "stl" / f"{part}.stl")
                 print(f"  {variante}: {part}.stl")
                 count = counts.get(count, count)
@@ -264,15 +287,16 @@ def export_gitter(variante: str) -> None:
 
         assembly = []
         for part in [f"einbau_{p}" for p in cfg["einbau"]] + cfg["references"]:
-            mesh = openscad(part, None, tmp / f"{part}.stl", scad)
+            mesh = openscad(part, None, tmp / f"{part}.stl", scad, defines)
             name = part.removeprefix("einbau_")
             solid = mesh_to_solid(mesh)
             if not part.startswith("ref_"):
                 write_step([(name, solid)], target / "step" / f"{name}.step")
                 print(f"  {variante}: {name}.step")
             assembly.append((name, solid))
-        write_step(assembly, target / f"{scad.stem}_baugruppe.step")
-        print(f"  {variante}: {scad.stem}_baugruppe.step")
+        baugruppe = cfg.get("baugruppe", f"{scad.stem}_baugruppe.step")
+        write_step(assembly, target / baugruppe)
+        print(f"  {variante}: {baugruppe}")
 
 
 def export(variante: str) -> None:
